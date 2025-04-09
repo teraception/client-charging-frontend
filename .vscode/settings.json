@@ -1,0 +1,4 @@
+{
+  "cSpell.words": ["BITWARDEN", "clsx", "Datasource", "TAILSCALE", "WAZUH"],
+  "typescript.tsdk": "node_modules\\typescript\\lib"
+}
