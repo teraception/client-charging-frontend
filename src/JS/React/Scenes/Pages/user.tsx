@@ -30,7 +30,8 @@ import { UpdateUserPasswordDialog } from "../Partials/User/UpdatePasswordUserMod
 import { ChangeUserRoleDialog } from "../Partials/User/ChangeUserRoleModal";
 import RenderWithConfirmation from "JS/React/Components/RenderWithConfirmation";
 import AppChip from "JS/React/Components/AppChip";
-import { StatusCode } from "@teraception/employee-management-lib";
+import { StatusCode } from "JS/typingForNow/types";
+// import { StatusCode } from "@teraception/client-payment-integration-lib";
 
 export type UserComponentClassKey = StyleClassKey<typeof useStyles>;
 

@@ -3,7 +3,7 @@ import moment from "moment";
 import { useRef, useState, useEffect, useMemo } from "react";
 
 export function useAccessToken(notifyExpiry = false, session: AuthSession) {
-  const timerRef = useRef<any>(null || null);
+  const timerRef = useRef<any>(null);
   const [expired, setExpired] = useState<boolean>(null);
   const token = useMemo<string>(() => {
     if (session) {

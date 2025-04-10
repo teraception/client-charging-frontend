@@ -7,10 +7,11 @@ import {
   WithValidityState,
   extractResponseErrors,
 } from "JS/types/Response";
-import {
-  StatusCode,
-  type Response,
-} from "@teraception/employee-management-lib";
+import { Response, StatusCode } from "JS/typingForNow/types";
+// import {
+//   StatusCode,
+//   type Response,
+// } from "@teraception/client-payment-integration-lib";
 
 export class BaseService {
   private manager: AxiosInstance;

@@ -3,9 +3,7 @@ import Helmet from "react-helmet";
 import HeaderContainer from "JS/React/Components/HeadContainer";
 import { CircularProgress, Grid, Menu, MenuItem, Theme } from "@mui/material";
 import { css } from "@emotion/react";
-import { StandardProps } from "JS/React/Types/Style";
 import { StyleClassKey, makeStyles } from "JS/React/Style/styleHelper";
-
 import BackendSidebar from "JS/React/Container/SidebarDriver";
 import {
   LayoutContext,
@@ -17,22 +15,16 @@ import { Routes, Route, useNavigate } from "react-router-dom";
 import { useRouting } from "JS/React/Hooks/Routes";
 import { Dashboard } from "JS/React/Scenes/Pages/Dashboard";
 import clsx from "clsx";
-import { Employees } from "JS/React/Scenes/Pages/Employees";
 import { useAuth } from "JS/Cognito/CognitoContextProvider";
-import { IntegrationsComponent } from "JS/React/Scenes/Pages/Integrations";
-import { OrgLocSelectorComponent } from "JS/React/Scenes/Partials/layout/OrgLocSelectors";
 import { useLoggedInUser } from "JS/Routing/Context/LoggedInUseContextProvider";
-import { EmployeeDetailsPage } from "JS/React/Scenes/Partials/Employees/EmployeeDetailsPage";
-import LeavePolicy from "JS/React/Scenes/Pages/LeavePolicy";
-import AppButton from "JS/React/Components/AppButton";
-import { Role } from "@teraception/employee-management-lib";
-import Groups from "JS/React/Scenes/Pages/Groups";
+// import { Role } from "@teraception/client-payment-integration-lib";
 import { UserComponent } from "../Pages/user";
 import { useAccessHandler } from "JS/React/Hooks/AccessHandler";
 import { NoAccessComponent } from "../Pages/NoAccess";
-import FeedbackPolicy from "../Pages/FeedbackPolicy";
-import IncrementalPolicy from "../Pages/IncrementalPolicy";
-import AccountSetting from "JS/React/Scenes/Pages/AccountSetting";
+import AppButton from "JS/React/Components/AppButton";
+import { Role } from "JS/typingForNow/types";
+import { ClientComponent } from "../Pages/client";
+
 // import { useLoggedInUser } from "JS/Routing/Context/ServiceContextProvider";
 
 const styles = (props: any, theme: Theme) => ({
@@ -99,7 +91,7 @@ export const Layout = (props: LayoutProps) => {
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const [layoutContextSetting, setLayoutContext] =
     useState<LayoutContextSetting>(getLayoutContextDefault());
-  const { isSuperAdmin, isHr } = useAccessHandler();
+  const { isSuperAdmin, isClient } = useAccessHandler();
   const layoutContextValue = useMemo((): LayoutContextValue => {
     return {
       ...layoutContextSetting,
@@ -119,41 +111,7 @@ export const Layout = (props: LayoutProps) => {
   const commonRoutes = (
     <>
       <Route path={""} key={"dashboard"} element={<Dashboard />} />
-      <Route path={"organization/:organizationId"}>
-        <Route path={"location/:locationId"}>
-          <Route path={"employees"}>
-            <Route index element={<Employees />} />
-            <Route
-              path={":employeeId"}
-              key={"employeesDetails"}
-              element={<EmployeeDetailsPage />}
-            />
-          </Route>
-          <Route path={"account-setting"}>
-            <Route index element={<AccountSetting />} />
-          </Route>
-          <Route path={"groups"}>
-            <Route index element={<Groups />} />
-          </Route>
-        </Route>
-        <Route path={`policies`} key={"policies"}>
-          <Route
-            path={`leave-policy`}
-            key={"leave-policy"}
-            element={<LeavePolicy />}
-          />
-          <Route
-            path={`feedback-policy`}
-            key={"feedback-policy"}
-            element={<FeedbackPolicy />}
-          />
-          <Route
-            path={`incremental-policy`}
-            key={"incremental-policy"}
-            element={<IncrementalPolicy />}
-          />
-        </Route>
-      </Route>
+      <Route path={"clients"} key={"clients"} element={<ClientComponent />} />
     </>
   );
 
@@ -163,17 +121,14 @@ export const Layout = (props: LayoutProps) => {
       <Route path={"users"}>
         <Route index element={<UserComponent />} />
       </Route>
-      <Route path={"organization/:organizationId"}>
-        <Route path={"location/:locationId"}>
-          <Route path={"integrations"}>
-            <Route
-              index
-              key={"integrations"}
-              element={<IntegrationsComponent />}
-            />
-          </Route>
-        </Route>
-      </Route>
+    </Routes>
+  );
+  const clientRoutes = (
+    <Routes>
+      {commonRoutes}
+      {/* <Route path={"users"}>
+        <Route index element={<UserComponent />} />
+      </Route> */}
     </Routes>
   );
 
@@ -191,28 +146,12 @@ export const Layout = (props: LayoutProps) => {
     </Routes>
   );
 
-  const employeeRoutes = (
-    <Routes>
-      <Route path={"organization/:organizationId"}>
-        <Route path={"location/:locationId"}>
-          <Route
-            path={"employees/:employeeId"}
-            key={"employeesDetails"}
-            element={<EmployeeDetailsPage />}
-          />
-        </Route>
-      </Route>
-      <Route path={"*"} element={<NoAccessComponent />} />
-    </Routes>
-  );
-
   return (
     <Fragment>
       <Helmet>
         <title>Home</title>
       </Helmet>
       <HeaderContainer>
-        <OrgLocSelectorComponent />
         <Grid
           container
           xs={3}
@@ -229,11 +168,7 @@ export const Layout = (props: LayoutProps) => {
               setShowUserActionDropdown(true);
             }}
           >
-            {loggedInUser?.user?.role?.includes(Role.SUPER_ADMIN)
-              ? loggedInUser?.user?.email
-              : loggedInUser?.employee?.name?.substring(0, 9).length > 8
-              ? `${loggedInUser?.employee?.name?.substring(0, 9)}...`
-              : loggedInUser?.employee?.name || "username"}
+            {loggedInUser?.user?.email}
           </AppButton>
           <Menu
             id="basic-menu"
@@ -252,14 +187,14 @@ export const Layout = (props: LayoutProps) => {
               horizontal: "left",
             }}
           >
-            <MenuItem
+            {/* <MenuItem
               onClick={() => {
                 setShowUserActionDropdown(false);
                 navigate(routeProvider.react.users());
               }}
             >
               Edit Profile
-            </MenuItem>
+            </MenuItem> */}
             <MenuItem
               onClick={async () => {
                 setShowUserActionDropdown(false);
@@ -284,7 +219,7 @@ export const Layout = (props: LayoutProps) => {
               [classes.hideScroll]: layoutContextValue.hideScroll,
             })}
           >
-            {isSuperAdmin ? superAdminRoutes : isHr ? hrRoutes : employeeRoutes}
+            {isSuperAdmin ? superAdminRoutes : clientRoutes}
           </div>
         </div>
       </LayoutContext.Provider>

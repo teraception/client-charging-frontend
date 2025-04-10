@@ -1,8 +1,9 @@
-import {
-  StatusCode,
-  type Response,
-} from "@teraception/employee-management-lib";
+// import {
+//   StatusCode,
+//   type Response,
+// } from "@teraception/client-payment-integration-lib";
 
+import { Response, StatusCode } from "JS/typingForNow/types";
 import {
   getInitializedValidityState,
   addError,

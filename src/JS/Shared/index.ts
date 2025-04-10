@@ -1,17 +1,11 @@
-import {
-  Employee,
-  Location,
-  Organization,
-  User,
-} from "@teraception/employee-management-lib";
+// import { User } from "@teraception/client-payment-integration-lib";
 
-export * from "@teraception/employee-management-lib";
+import { User } from "JS/typingForNow/types";
+
+export * from "@teraception/client-payment-integration-lib";
 
 export interface LoggedInUserDTO {
-  organization: Organization;
-  location: Location;
   user: User;
-  employee: Employee;
 }
 export type IntegrationRefType = "ORGANIZATION" | "LOCATION";
 

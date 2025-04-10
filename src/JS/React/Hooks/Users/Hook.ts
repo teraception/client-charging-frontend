@@ -1,8 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAppServiceContext } from "JS/Routing/Context/ServiceContextProvider";
 import { useQueryKeys } from "../UseQueryKeys";
-import { Role, UserDTO } from "@teraception/employee-management-lib";
+// import { Role, UserDTO } from "@teraception/client-payment-integration-lib";
 import { useAuth } from "JS/Cognito/CognitoContextProvider";
+import { Role, UserDTO } from "JS/typingForNow/types";
 
 export const useGetMe = () => {
   const { userService } = useAppServiceContext();

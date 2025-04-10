@@ -7,20 +7,13 @@ import { StyleClassKey, makeStyles } from "JS/React/Style/styleHelper";
 import SidebarItem, {
   SidebarItemProps,
 } from "JS/React/Components/Sidebar/SidebarItem";
-import SettingsIcon from "@mui/icons-material/Settings";
+import AddCardIcon from "@mui/icons-material/AddCard";
 import PeopleIcon from "@mui/icons-material/People";
-import PowerIcon from "@mui/icons-material/Power";
 import Sidebar from "JS/React/Components/Sidebar/Sidebar";
 import { useRouting } from "JS/React/Hooks/Routes";
 import { withRouter } from "JS/Routing/RouteComponent/WithRoute";
 import { useAccessHandler } from "JS/React/Hooks/AccessHandler";
 import { useLoggedInUser } from "../../Routing/Context/LoggedInUseContextProvider";
-import GradingIcon from "@mui/icons-material/Grading";
-import GroupRemoveIcon from "@mui/icons-material/GroupRemove";
-import FeedIcon from "@mui/icons-material/Feed";
-import PlusOneIcon from "@mui/icons-material/PlusOne";
-import Settings from "@mui/icons-material/Settings";
-import Diversity3Icon from "@mui/icons-material/Diversity3";
 
 const styles = (props: any, theme: Theme) => {
   return {
@@ -84,12 +77,7 @@ const Component = (props: BackendSidebarProps) => {
   const classes = useStyles(props);
   const [itemsState, setItemState] = useState<ItemStateMap>({});
   const { linkProvider } = useRouting();
-  const {
-    isOrganizationLocationScopedDisabled,
-    isOrganizationScopedDisabled,
-    isHr,
-    isEmployee,
-  } = useAccessHandler();
+  const { isClient, isSuperAdmin } = useAccessHandler();
   const { loggedInUser } = useLoggedInUser();
   const routeProvider = linkProvider;
   function getStateForItem(identifier: string): SidebarItemState {
@@ -216,117 +204,31 @@ const Component = (props: BackendSidebarProps) => {
       permission?: any;
     }>[] = [];
 
-    locationItems = [
-      {
-        identifier: "employees",
-        title: "Employees",
-        hasChilds: false,
-        button: true,
-        skip: false,
-        route: provider.react.employees(),
-        icon: <PeopleIcon className={classes.iconColor} />,
-        disabled: isOrganizationLocationScopedDisabled,
-      },
-      {
-        identifier: "groups",
-        title: "Groups",
-        hasChilds: false,
-        button: true,
-        skip: false,
-        route: provider.react.groups(),
-        icon: <Diversity3Icon className={classes.iconColor} />,
-        disabled: isOrganizationLocationScopedDisabled,
-      },
-      {
-        identifier: "integrations",
-        title: "Integrations",
-        hasChilds: false,
-        button: true,
-        skip: false,
-        route: provider.react.integrations(),
-        icon: <PowerIcon className={classes.iconColor} />,
-        disabled: isOrganizationLocationScopedDisabled,
-      },
-      {
+    locationItems = [];
+    if (isSuperAdmin) {
+      locationItems.push({
         identifier: "users",
         title: "Users",
         hasChilds: false,
         button: true,
         skip: false,
         route: provider.react.users(),
-        icon: <SettingsIcon className={classes.iconColor} />,
-      },
-      {
-        identifier: "policies",
-        title: "Policies",
-        hasChilds: true,
-        button: true,
-        skip: false,
-        icon: <FeedIcon className={classes.iconColor} />,
-        disabled: isOrganizationScopedDisabled,
-        childs: [
-          {
-            identifier: "leave policies",
-            title: "Leave Policies",
-            hasChilds: false,
-            button: true,
-            skip: false,
-            route: provider.react.policies().leavePolicies(),
-            icon: <GroupRemoveIcon className={classes.iconColor} />,
-            disabled: isOrganizationScopedDisabled,
-          },
-          {
-            identifier: "feedback policies",
-            title: "Feedback Policies",
-            hasChilds: false,
-            button: true,
-            skip: false,
-            route: provider.react.policies().feedbackPolicies(),
-            icon: <GradingIcon className={classes.iconColor} />,
-            disabled: isOrganizationScopedDisabled,
-          },
-          {
-            identifier: "incremental policies",
-            title: "Incremental Policies",
-            hasChilds: false,
-            button: true,
-            skip: false,
-            route: provider.react.policies().incrementalPolicies(),
-            icon: <PlusOneIcon className={classes.iconColor} />,
-            disabled: isOrganizationScopedDisabled,
-          },
-        ],
-      },
-      {
-        identifier: "account setting",
-        title: "Account Settings",
+        icon: <PeopleIcon className={classes.iconColor} />,
+      });
+      locationItems.push({
+        identifier: "clients",
+        title: "Clients",
         hasChilds: false,
         button: true,
         skip: false,
-        route: provider.react.accountSetting(),
-        icon: <Settings className={classes.iconColor} />,
-        disabled: isOrganizationScopedDisabled,
-      },
-    ];
-    if (isHr) {
-      locationItems = locationItems.filter(
-        (x) => x.identifier !== "integrations" && x.identifier !== "users"
-      );
+        route: provider.react.clients(),
+        icon: <AddCardIcon className={classes.iconColor} />,
+      });
     }
-    if (isEmployee) {
-      locationItems = [
-        {
-          identifier: "manageYourself",
-          title: "Manage Your Self",
-          hasChilds: false,
-          button: true,
-          skip: false,
-          route: provider.react.employeeDetails(loggedInUser?.employee?.id),
-          icon: <PeopleIcon className={classes.iconColor} />,
-          disabled: isOrganizationLocationScopedDisabled,
-        },
-      ];
+    if (isClient) {
+      locationItems.push();
     }
+
     let sideBarItems: SidebarItemProps[] = locationItems;
 
     sideBarItems = filterItems(sideBarItems).map(setCommonItemProps);

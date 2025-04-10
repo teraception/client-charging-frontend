@@ -1,5 +1,6 @@
-import { Role } from "@teraception/employee-management-lib";
+// import { Role } from "@teraception/client-payment-integration-lib";
 import { useLoggedInUser } from "JS/Routing/Context/LoggedInUseContextProvider";
+import { Role } from "JS/typingForNow/types";
 
 export function useAccessHandler() {
   const { loggedInUser } = useLoggedInUser();

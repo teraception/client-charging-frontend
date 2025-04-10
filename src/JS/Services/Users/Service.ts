@@ -1,8 +1,13 @@
-import { Role, User, UserDTO } from "@teraception/employee-management-lib";
+// import {
+//   Role,
+//   User,
+//   UserDTO,
+// } from "@teraception/client-payment-integration-lib";
 import { AppResponse } from "JS/types/Response";
 import { WithValidityState } from "JS/types";
 import { BaseService } from "../BaseService";
 import { LoggedInUserDTO } from "JS/Shared";
+import { Role, User, UserDTO } from "JS/typingForNow/types";
 
 export class UserService extends BaseService {
   getMe(): Promise<

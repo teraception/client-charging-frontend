@@ -35,9 +35,6 @@ export const LoggedInUserContextProvider = (
     if (userData) {
       updateLoggedInUser({
         ...userData,
-        employee: null,
-        location: null,
-        organization: null,
       });
     }
   }, [userData, isLoading]);

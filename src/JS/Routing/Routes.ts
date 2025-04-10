@@ -1,34 +1,15 @@
 import { defaults } from "lodash-es";
 import { config } from "JS/Config";
 import { BaseRoutingContext } from "./Context/BaseRoutingContext";
-import { OrganizationLocationRoutingContext } from "./Context/OrganizationLocationRoutingContext";
-import { OrganizationRoutingContext } from "./Context/OrganizationRoutingContext";
-import { LocationRoutingContext } from "./Context/LocationRoutingContext";
 import { AuthorizedRoutingContext } from "./Context/AuthorizedRoutingContext";
 
-export interface RouteParams {
-  organizationId?: string;
-  locationId?: string;
-}
+export interface RouteParams {}
 
 export const routesForContext = () => (params?: RouteParams) => {
-  params = defaults({}, params, {
-    organizationId: ":organizationId",
-    locationId: ":locationId",
-  });
+  params = defaults({}, params, {});
 
   const authorizedContext = new AuthorizedRoutingContext();
   const unauthorizedContext = new BaseRoutingContext();
-
-  const organizationRoutingContext = new OrganizationRoutingContext(
-    params.organizationId
-  );
-  const locationRoutingContext = new LocationRoutingContext(params.locationId);
-  const organizationLocationRoutingContext =
-    new OrganizationLocationRoutingContext(
-      params.organizationId,
-      params.locationId
-    );
 
   return {
     server: {
@@ -42,6 +23,14 @@ export const routesForContext = () => (params?: RouteParams) => {
           details: (userId: string) => `${base}/user/${userId}`,
           delete: (userId: string) => `${base}/user/${userId}`,
           updateRoles: () => `${base}/user/role`,
+        },
+        client: {
+          getAll: () => `${base}/client/list`,
+          create: () => `${base}/client`,
+          details: (clientId: string) => `${base}/client/${clientId}`,
+          update: (clientId: string) => `${base}/client/${clientId}`,
+          delete: (clientId: string) => `${base}/client/${clientId}`,
+          invite: () => `${base}/client/invite`,
         },
       }))(`${config.baseApiUrl}`),
     },
@@ -58,9 +47,9 @@ export const routesForContext = () => (params?: RouteParams) => {
 
       users: () => authorizedContext.buildUrl(`/users`),
 
+      clients: () => authorizedContext.buildUrl(`/clients`),
+
       rootAuthorized: () => authorizedContext.buildUrl(`/`),
-      accountSetting: () =>
-        organizationLocationRoutingContext.buildUrl(`/account-setting`),
     },
   };
 };
@@ -102,17 +91,9 @@ export const getMatchingRoute = (route: string, fullUrl: string) => {
   const bestMatch = getBestMatch(finalRoute, routeProvider.react);
   return (params: RouteParams) => {
     if (bestMatch) {
-      return bestMatch
-        .replace(`:organizationId`, params.organizationId)
-        .replace(`:locationId`, params.locationId);
+      return bestMatch;
     } else {
-      if (params.organizationId) {
-        return routesForContext()(params).react.dashboard();
-      } else if (params.locationId) {
-        return routesForContext()(params).react.dashboard();
-      } else {
-        return routesForContext()(params).react.dashboard();
-      }
+      return routesForContext()(params).react.dashboard();
     }
   };
 };

@@ -6,9 +6,10 @@ import { DatePicker, DatePickerProps } from "@mui/x-date-pickers/DatePicker";
 import { Theme } from "@mui/material";
 import dayjs from "dayjs";
 import clsx from "clsx";
-import { FieldState } from "@teraception/employee-management-lib";
+import { FieldState } from "@teraception/client-payment-integration-lib";
 import { css } from "@emotion/react";
 import { StyleClassKey, makeStyles } from "JS/React/Style/styleHelper";
+// import { FieldState } from "JS/typingForNow/types";
 
 export type AppDatePickerClassKey = StyleClassKey<typeof useStyles>;
 

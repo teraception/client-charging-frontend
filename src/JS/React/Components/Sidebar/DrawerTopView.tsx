@@ -52,7 +52,7 @@ export function DrawerTopView(props: DrawerTopViewProps) {
       mb={4}
     >
       <Grid item xs={12} pl={2} pr={2}>
-        <Typography variant="h5">Employee Management</Typography>
+        <Typography variant="h5">Client Management</Typography>
       </Grid>
     </Grid>
   );

@@ -1,5 +1,6 @@
 import { useAuth } from "JS/Cognito/CognitoContextProvider";
 import { useRouting } from "JS/React/Hooks/Routes";
+import { JSX } from "react";
 import { Navigate } from "react-router-dom";
 
 export interface ProtectedRouteProps {

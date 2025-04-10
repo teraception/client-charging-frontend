@@ -11,11 +11,12 @@ import { useValidityState } from "JS/React/Hooks/UseValidityState";
 import { useGetUserDetails, useUpdateUserRoles } from "JS/React/Hooks/Users";
 import { useEffect } from "react";
 import { processValidityState } from "JS/types";
-import { Role, StatusCode } from "@teraception/employee-management-lib";
+// import { Role, StatusCode } from "@teraception/client-payment-integration-lib";
 import { SelectComponent } from "JS/React/Components/SelectComponent";
 import { enqueueSnackbar } from "notistack";
 import { css } from "@emotion/react";
 import { StyleClassKey, makeStyles } from "JS/React/Style/styleHelper";
+import { Role, StatusCode } from "JS/typingForNow/types";
 
 export type ChangeUserRoleClassKey = StyleClassKey<typeof useStyles>;
 
