@@ -54,13 +54,14 @@ export class ClientService extends BaseService {
     });
   }
 
-  inviteClient(
-    email: string
-  ): Promise<WithValidityState<AppResponse<boolean>>> {
+  inviteClient(data: {
+    name: string;
+    email: string;
+  }): Promise<WithValidityState<AppResponse<boolean>>> {
     return this.doServerXHR<boolean>({
       url: this.activeRoute().server.api.client.invite(),
       method: "POST",
-      data: { email },
+      data,
     });
   }
 }

@@ -118,8 +118,8 @@ export const useInviteClient = () => {
   const queryClient = useQueryClient();
   const { client } = useQueryKeys();
   const { data, mutateAsync, isPending } = useMutation({
-    mutationFn: async (email: string) => {
-      const response = await clientService.inviteClient(email);
+    mutationFn: async (data: { name: string; email: string }) => {
+      const response = await clientService.inviteClient(data);
       return response;
     },
     onSuccess: () => {

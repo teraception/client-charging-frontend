@@ -188,9 +188,9 @@ export const ClientComponent = (props: ClientComponentProps) => {
     ),
   });
 
-  const handleInviteClient = async (email: string) => {
+  const handleInviteClient = async (data: { name: string; email: string }) => {
     try {
-      const response = await inviteClient(email);
+      const response = await inviteClient(data);
       if (response.statusCode === StatusCode.SUCCESS) {
         enqueueSnackbar("Client invited successfully", {
           variant: "success",
