@@ -13,8 +13,13 @@ const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 interface InviteClientDialogProps {
   open: boolean;
   onClose: () => void;
-  onInvite: (data: { name: string; email: string }) => Promise<void>;
+  onInvite: (data: {
+    name: string;
+    email: string;
+    clientId: string;
+  }) => Promise<void>;
   loading: boolean;
+  clientId: string;
 }
 
 interface InviteFormState {
@@ -29,6 +34,7 @@ export const InviteClientDialog = ({
   onClose,
   onInvite,
   loading,
+  clientId,
 }: InviteClientDialogProps) => {
   const [inviteForm, setInviteForm] = useState<InviteFormState>({
     name: "",
@@ -76,7 +82,11 @@ export const InviteClientDialog = ({
 
   const handleInvite = async () => {
     if (validateEmail(inviteForm.email) && validateName(inviteForm.name)) {
-      await onInvite({ name: inviteForm.name, email: inviteForm.email });
+      await onInvite({
+        name: inviteForm.name,
+        email: inviteForm.email,
+        clientId,
+      });
       setInviteForm({
         name: "",
         email: "",

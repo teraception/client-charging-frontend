@@ -171,6 +171,7 @@ export interface User {
   isBlocked?: boolean;
   createdAt?: number;
   updatedAt?: number;
+  clientIds?: string[];
 }
 export enum UserGender {
   MALE = "male",
@@ -199,8 +200,19 @@ export interface Client {
 
 export interface CreateClientDTO {
   name: string;
+  userId?: string;
 }
 
 export interface UpdateClientDTO {
   name?: string;
+  userId?: string;
+}
+
+export interface PaymentMethod {
+  id: string;
+  clientId: string;
+  customerId: string;
+}
+export interface CreatePaymentMethodDto {
+  clientId: string;
 }

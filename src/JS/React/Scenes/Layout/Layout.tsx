@@ -24,6 +24,10 @@ import { NoAccessComponent } from "../Pages/NoAccess";
 import AppButton from "JS/React/Components/AppButton";
 import { Role } from "JS/typingForNow/types";
 import { ClientComponent } from "../Pages/client";
+import { ClientsListComponent } from "../Pages/client/ClientsList";
+import { PaymentMethodComponent } from "../Pages/client/PaymentMethod";
+import { StripeIndex } from "JS/React/stripe/Index";
+import { PaymentSetupComplete } from "JS/React/stripe/SetupComplete";
 
 // import { useLoggedInUser } from "JS/Routing/Context/ServiceContextProvider";
 
@@ -111,7 +115,6 @@ export const Layout = (props: LayoutProps) => {
   const commonRoutes = (
     <>
       <Route path={""} key={"dashboard"} element={<Dashboard />} />
-      <Route path={"clients"} key={"clients"} element={<ClientComponent />} />
     </>
   );
 
@@ -121,14 +124,32 @@ export const Layout = (props: LayoutProps) => {
       <Route path={"users"}>
         <Route index element={<UserComponent />} />
       </Route>
+      <Route path={"clients"} key={"clients"} element={<ClientComponent />} />
     </Routes>
   );
   const clientRoutes = (
     <Routes>
       {commonRoutes}
-      {/* <Route path={"users"}>
-        <Route index element={<UserComponent />} />
-      </Route> */}
+      <Route
+        path={"clients/list"}
+        key={"clientsList"}
+        element={<ClientsListComponent />}
+      />
+      <Route
+        path={"clients/payment-methods"}
+        key={"paymentMethods"}
+        element={<PaymentMethodComponent />}
+      />
+      <Route
+        path="clients/payment-setup-complete"
+        key={"paymentSetupComplete"}
+        element={<PaymentSetupComplete />}
+      />
+      <Route
+        path="clients/:id/payment-methods/add"
+        key={"paymentSetup"}
+        element={<StripeIndex />}
+      />
     </Routes>
   );
 
@@ -154,9 +175,9 @@ export const Layout = (props: LayoutProps) => {
       <HeaderContainer>
         <Grid
           container
-          xs={3}
-          ml={3}
-          mr={3}
+          // xs={3}
+          // ml={3}
+          // mr={3}
           justifyContent={"end"}
           alignItems={"center"}
         >

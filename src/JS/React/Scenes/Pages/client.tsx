@@ -141,6 +141,8 @@ export const ClientComponent = (props: ClientComponentProps) => {
       return {
         id: client.id,
         name: client.name,
+        createdAt: client.createdAt,
+        updatedAt: client.updatedAt,
       };
     });
   }, [clientsData]);
@@ -159,8 +161,16 @@ export const ClientComponent = (props: ClientComponentProps) => {
     positionActionsColumn: "last",
     renderRowActions: ({ row }) => (
       <Box>
-        <IconButton onClick={() => handleEditClient(row.original)}>
+        <IconButton onClick={() => handleEditClient(row.original as Client)}>
           <EditIcon color="action" />
+        </IconButton>
+        <IconButton
+          onClick={() => {
+            setSelectedClient(row.original as Client);
+            setShowInviteDialog(true);
+          }}
+        >
+          <PersonAddIcon color="action" />
         </IconButton>
         <RenderWithConfirmation
           onConfirm={async () => {
@@ -188,7 +198,11 @@ export const ClientComponent = (props: ClientComponentProps) => {
     ),
   });
 
-  const handleInviteClient = async (data: { name: string; email: string }) => {
+  const handleInviteClient = async (data: {
+    name: string;
+    email: string;
+    clientId: string;
+  }) => {
     try {
       const response = await inviteClient(data);
       if (response.statusCode === StatusCode.SUCCESS) {
@@ -216,14 +230,6 @@ export const ClientComponent = (props: ClientComponentProps) => {
             >
               Create Client
             </AppButton>
-            <AppButton
-              variant="contained"
-              color="primary"
-              startIcon={<PersonAddIcon />}
-              onClick={() => setShowInviteDialog(true)}
-            >
-              Invite Client
-            </AppButton>
           </Box>
           <MaterialReactTable table={clientsTable} />
         </Grid>
@@ -242,6 +248,7 @@ export const ClientComponent = (props: ClientComponentProps) => {
         onClose={() => setShowInviteDialog(false)}
         onInvite={handleInviteClient}
         loading={inviteClientLoader}
+        clientId={selectedClient?.id || ""}
       />
       <ClientDialog
         open={showClientDialog}

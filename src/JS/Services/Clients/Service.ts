@@ -15,6 +15,15 @@ export class ClientService extends BaseService {
     });
   }
 
+  getClientsWithUserId(
+    userId: string
+  ): Promise<WithValidityState<AppResponse<Client[]>>> {
+    return this.doServerXHR<Client[]>({
+      url: this.activeRoute().server.api.client.getClientsWithUserId(userId),
+      method: "GET",
+    });
+  }
+
   getClientDetails(
     clientId: string
   ): Promise<WithValidityState<AppResponse<Client>>> {

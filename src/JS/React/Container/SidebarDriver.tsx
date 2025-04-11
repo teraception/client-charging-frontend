@@ -14,6 +14,7 @@ import { useRouting } from "JS/React/Hooks/Routes";
 import { withRouter } from "JS/Routing/RouteComponent/WithRoute";
 import { useAccessHandler } from "JS/React/Hooks/AccessHandler";
 import { useLoggedInUser } from "../../Routing/Context/LoggedInUseContextProvider";
+import AccessibilityIcon from "@mui/icons-material/Accessibility";
 
 const styles = (props: any, theme: Theme) => {
   return {
@@ -222,11 +223,28 @@ const Component = (props: BackendSidebarProps) => {
         button: true,
         skip: false,
         route: provider.react.clients(),
-        icon: <AddCardIcon className={classes.iconColor} />,
+        icon: <AccessibilityIcon className={classes.iconColor} />,
       });
     }
     if (isClient) {
-      locationItems.push();
+      locationItems.push({
+        identifier: "clientsList",
+        title: "Clients",
+        hasChilds: false,
+        button: true,
+        skip: false,
+        route: provider.react.clientsList(),
+        icon: <PeopleIcon className={classes.iconColor} />,
+      });
+      locationItems.push({
+        identifier: "paymentMethods",
+        title: "Payment Methods",
+        hasChilds: false,
+        button: true,
+        skip: false,
+        route: provider.react.paymentMethods(),
+        icon: <AddCardIcon className={classes.iconColor} />,
+      });
     }
 
     let sideBarItems: SidebarItemProps[] = locationItems;

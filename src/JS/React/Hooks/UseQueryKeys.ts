@@ -32,14 +32,24 @@ export const useQueryKeys = () => {
     () => ({
       all: ["client"] as const,
       list: () => [...client.all, "list"] as const,
+      userClients: (userId: string) =>
+        [...client.all, `user-${userId}`] as const,
       details: (clientId: string) =>
         [...client.all, `client-${clientId}`] as const,
     }),
     []
   );
 
+  const paymentMethod = useMemo(
+    () => ({
+      all: ["payment-method"] as const,
+      list: () => [...paymentMethod.all, "list"] as const,
+    }),
+    []
+  );
   return {
     user,
     client,
+    paymentMethod,
   };
 };

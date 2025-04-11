@@ -31,23 +31,33 @@ export const routesForContext = () => (params?: RouteParams) => {
           update: (clientId: string) => `${base}/client/${clientId}`,
           delete: (clientId: string) => `${base}/client/${clientId}`,
           invite: () => `${base}/client/invite`,
+          getClientsWithUserId: (userId: string) =>
+            `${base}/client/user-clients/${userId}`,
+        },
+        paymentMethod: {
+          createPaymentMethod: () => `${base}/payment-method`,
+          getPaymentMethods: () => `${base}/payment-method`,
         },
       }))(`${config.baseApiUrl}`),
     },
 
     react: {
       root: () => unauthorizedContext.buildUrl(`/`),
-
       login: () => unauthorizedContext.buildUrl(`/login`),
       resetPassword: () => unauthorizedContext.buildUrl(`/resetpassword`),
       confirmResetPassword: () =>
         unauthorizedContext.buildUrl(`/confirm-reset-password`),
       rootUnauthorized: () => unauthorizedContext.buildUrl(`/`),
       dashboard: () => authorizedContext.buildUrl(`/`),
-
       users: () => authorizedContext.buildUrl(`/users`),
-
       clients: () => authorizedContext.buildUrl(`/clients`),
+
+      // routes for clients
+      clientsList: () => authorizedContext.buildUrl(`/clients/list`),
+      paymentMethods: () =>
+        authorizedContext.buildUrl(`/clients/payment-methods`),
+      addPaymentMethod: (clientId: string) =>
+        authorizedContext.buildUrl(`/clients/${clientId}/payment-methods/add`),
 
       rootAuthorized: () => authorizedContext.buildUrl(`/`),
     },

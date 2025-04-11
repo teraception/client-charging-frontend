@@ -134,3 +134,21 @@ export const useInviteClient = () => {
     inviteClientLoader: isPending,
   };
 };
+
+export const useGetClientsWithUserId = (userId: string) => {
+  const { clientService } = useAppServiceContext();
+  const { client } = useQueryKeys();
+  const { data, isLoading } = useQuery({
+    queryKey: client.userClients(userId),
+    enabled: !!userId,
+    queryFn: async () => {
+      const response = await clientService.getClientsWithUserId(userId);
+      return response;
+    },
+  });
+  return {
+    clientsData: data?.data,
+    getClientsWithUserIdLoader: isLoading,
+    getClientsWithUserIdResponse: data,
+  };
+};
