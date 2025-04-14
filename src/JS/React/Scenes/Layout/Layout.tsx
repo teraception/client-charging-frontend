@@ -28,17 +28,13 @@ import { useLoggedInUser } from "JS/Routing/Context/LoggedInUseContextProvider";
 // import { Role } from "@teraception/client-payment-integration-lib";
 import { UserComponent } from "../Pages/user";
 import { useAccessHandler } from "JS/React/Hooks/AccessHandler";
-import { NoAccessComponent } from "../Pages/NoAccess";
 import AppButton from "JS/React/Components/AppButton";
-import { Role } from "JS/typingForNow/types";
 import { ClientComponent } from "../Pages/client";
 import { PaymentMethodComponent } from "../Pages/client/PaymentMethod";
 import { StripeIndex } from "JS/React/stripe/Index";
 import { PaymentSetupComplete } from "JS/React/stripe/SetupComplete";
 import { useSelectedClient } from "JS/React/Context/SelectedClientContext";
 import { ProjectsComponent } from "../Pages/projects/Projects";
-
-// import { useLoggedInUser } from "JS/Routing/Context/ServiceContextProvider";
 
 const styles = (props: any, theme: Theme) => ({
   main: css({
@@ -139,7 +135,12 @@ export const Layout = (props: LayoutProps) => {
   const commonRoutes = (
     <>
       <Route path={""} key={"dashboard"} element={<Dashboard />} />
-      <Route path={"projects"} element={<ProjectsComponent />} />
+      <Route path={"clients/projects"} element={<ProjectsComponent />} />
+      <Route
+        path={"clients/payment-methods"}
+        key={"paymentMethods"}
+        element={<PaymentMethodComponent />}
+      />
     </>
   );
 
@@ -157,11 +158,6 @@ export const Layout = (props: LayoutProps) => {
     <Routes>
       {commonRoutes}
 
-      <Route
-        path={"clients/payment-methods"}
-        key={"paymentMethods"}
-        element={<PaymentMethodComponent />}
-      />
       <Route
         path="clients/payment-setup-complete"
         key={"paymentSetupComplete"}

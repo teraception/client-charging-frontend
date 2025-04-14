@@ -1,67 +1,107 @@
-import {
-  Grid,
-  Typography,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
-  CircularProgress,
-} from "@mui/material";
+import { CircularProgress, Grid, Theme, Typography } from "@mui/material";
+import { css } from "@emotion/react";
+import { StyleClassKey, makeStyles } from "JS/React/Style/styleHelper";
 import { useGetClientPaymentMethods } from "JS/React/Hooks/PaymentMethods/Hook";
-import { useParams } from "react-router-dom";
-import { StripePaymentMethod } from "JS/typingForNow/types";
-import { useAppServiceContext } from "JS/Routing/Context/ServiceContextProvider";
+import { StandardProps } from "JS/React/Types/Style";
 import { useSelectedClient } from "JS/React/Context/SelectedClientContext";
+import { useAccessHandler } from "JS/React/Hooks/AccessHandler";
+import { processValidityState } from "JS/types";
+import { useEffect, useMemo } from "react";
+import {
+  MaterialReactTable,
+  useMaterialReactTable,
+} from "material-react-table";
 
-export const PaymentMethodComponent = () => {
+const styles = (props: any, theme: Theme) => ({
+  root: css({
+    // padding: theme.spacing(3),
+  }),
+});
+
+export type PaymentMethodComponentClassKey = StyleClassKey<typeof styles>;
+
+export interface PaymentMethodComponentProps
+  extends StandardProps<{}, PaymentMethodComponentClassKey> {}
+
+const [useStyles, useEmotionStyles] =
+  makeStyles<StyleClassKey<typeof styles>>(styles);
+
+export const PaymentMethodComponent = (props: PaymentMethodComponentProps) => {
+  const {} = props;
+  const classes = useStyles();
   const { selectedClient } = useSelectedClient();
-  const { clientPaymentMethods, clientPaymentMethodsIsLoading } =
-    useGetClientPaymentMethods(selectedClient?.id || null);
+  const { isSuperAdmin } = useAccessHandler();
+
+  // Get client-specific payment methods when a client is selected
+  const {
+    clientPaymentMethods,
+    clientPaymentMethodsIsLoading,
+    clientPaymentMethodsResponse,
+  } = useGetClientPaymentMethods(selectedClient?.id || null);
+
+  useEffect(() => {
+    processValidityState(clientPaymentMethodsResponse?.validityState);
+  }, [clientPaymentMethodsResponse]);
+
+  const isLoading = clientPaymentMethodsIsLoading;
+
+  const paymentMethodColumns = useMemo(
+    () => [
+      {
+        accessorKey: "brand",
+        header: "Card Brand",
+        enableHiding: false,
+        accessorFn: (row: any) => row.card?.brand || "N/A",
+      },
+      {
+        accessorKey: "last4",
+        header: "Last 4 Digits",
+        enableHiding: false,
+        accessorFn: (row: any) => row.card?.last4 || "N/A",
+      },
+      {
+        accessorKey: "expMonth",
+        header: "Expiry Month",
+        enableHiding: false,
+        accessorFn: (row: any) => row.card?.exp_month || "N/A",
+      },
+      {
+        accessorKey: "expYear",
+        header: "Expiry Year",
+        enableHiding: false,
+        accessorFn: (row: any) => row.card?.exp_year || "N/A",
+      },
+    ],
+    []
+  );
+
+  const paymentMethodTable = useMaterialReactTable({
+    columns: paymentMethodColumns,
+    data: clientPaymentMethods || [],
+    enableFullScreenToggle: false,
+    enableColumnOrdering: true,
+    enableGlobalFilter: false,
+    initialState: { density: "compact" },
+    muiPaginationProps: {
+      rowsPerPageOptions: [25, 50, 100],
+    },
+  });
 
   return (
-    <Grid container direction={"column"} spacing={2}>
-      <Grid item>
+    <Grid container className={classes.root}>
+      <Grid item container mb={3}>
         <Typography variant="h4">Payment Methods</Typography>
       </Grid>
-      <Grid item>
-        {clientPaymentMethodsIsLoading ? (
-          <CircularProgress />
-        ) : (
-          <TableContainer component={Paper}>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Card Brand</TableCell>
-                  <TableCell>Last 4 Digits</TableCell>
-                  <TableCell>Expiry Month</TableCell>
-                  <TableCell>Expiry Year</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {clientPaymentMethods.length > 0 ? (
-                  clientPaymentMethods.map((method: StripePaymentMethod) => (
-                    <TableRow key={method.id}>
-                      <TableCell>{method.card?.brand || "N/A"}</TableCell>
-                      <TableCell>{method.card?.last4 || "N/A"}</TableCell>
-                      <TableCell>{method.card?.exp_month || "N/A"}</TableCell>
-                      <TableCell>{method.card?.exp_year || "N/A"}</TableCell>
-                    </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell colSpan={4} align="center">
-                      No payment methods found
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        )}
+      <Grid container xs={12}>
+        <Grid item xs={12}>
+          <MaterialReactTable table={paymentMethodTable} />
+        </Grid>
       </Grid>
+      {isLoading && (
+        <CircularProgress
+          style={{ position: "fixed", top: "50%", left: "50%" }}
+        />
+      )}
     </Grid>
   );
 };

@@ -14,7 +14,6 @@ import { useRouting } from "JS/React/Hooks/Routes";
 import { withRouter } from "JS/Routing/RouteComponent/WithRoute";
 import { useAccessHandler } from "JS/React/Hooks/AccessHandler";
 import { useLoggedInUser } from "../../Routing/Context/LoggedInUseContextProvider";
-import AccessibilityIcon from "@mui/icons-material/Accessibility";
 import { ClientSelector } from "JS/React/Components/ClientSelector";
 import FolderIcon from "@mui/icons-material/Folder";
 import { useSelectedClient } from "JS/React/Context/SelectedClientContext";
@@ -222,28 +221,10 @@ const Component = (props: BackendSidebarProps) => {
         route: provider.react.users(),
         icon: <PeopleIcon className={classes.iconColor} />,
       });
-      // locationItems.push({
-      //   identifier: "clients",
-      //   title: "Clients",
-      //   hasChilds: false,
-      //   button: true,
-      //   skip: false,
-      //   route: provider.react.clients(),
-      //   icon: <AccessibilityIcon className={classes.iconColor} />,
-      // });
     }
 
     // Client user menu items - only show if a client is selected
     if (isClient && selectedClient) {
-      locationItems.push({
-        identifier: "paymentMethods",
-        title: "Payment Methods",
-        hasChilds: false,
-        button: true,
-        skip: false,
-        route: provider.react.paymentMethods(),
-        icon: <AddCardIcon className={classes.iconColor} />,
-      });
     }
 
     let sideBarItems: SidebarItemProps[] = [...locationItems];
@@ -258,6 +239,15 @@ const Component = (props: BackendSidebarProps) => {
         skip: false,
         route: provider.react.projects(),
         icon: <FolderIcon className={classes.iconColor} />,
+      });
+      sideBarItems.push({
+        identifier: "paymentMethods",
+        title: "Payment Methods",
+        hasChilds: false,
+        button: true,
+        skip: false,
+        route: provider.react.paymentMethods(),
+        icon: <AddCardIcon className={classes.iconColor} />,
       });
     }
 

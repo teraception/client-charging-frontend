@@ -72,9 +72,9 @@ export const routesForContext = () => (params?: RouteParams) => {
         authorizedContext.buildUrl(
           `/clients/${clientId}/project/${projectId}/payment-methods/add`
         ),
-      projects: () => authorizedContext.buildUrl(`/projects`),
+      projects: () => authorizedContext.buildUrl(`/clients/projects`),
       projectDetails: (projectId: string) =>
-        authorizedContext.buildUrl(`/projects/${projectId}`),
+        authorizedContext.buildUrl(`/clients/projects/${projectId}`),
 
       rootAuthorized: () => authorizedContext.buildUrl(`/`),
     },
