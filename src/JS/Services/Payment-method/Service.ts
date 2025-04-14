@@ -7,6 +7,8 @@ import {
   StripePaymentMethod,
 } from "JS/typingForNow/types";
 
+import { PaymentMethod as StripePaymentMethodType } from "@stripe/stripe-js";
+
 export class PaymentMethodService extends BaseService {
   createPaymentMethod(
     params: CreatePaymentMethodDto
@@ -41,6 +43,16 @@ export class PaymentMethodService extends BaseService {
         clientId
       ),
       method: "GET",
+    });
+  }
+
+  getStripePaymentMethodsByClientId(
+    clientId: string
+  ): Promise<WithValidityState<AppResponse<StripePaymentMethodType[]>>> {
+    return this.doServerXHR<StripePaymentMethodType[]>({
+      url: this.activeRoute().server.api.paymentMethod.getStripePaymentMethodsByClientId(
+        clientId
+      ),
     });
   }
 }

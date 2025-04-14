@@ -30,8 +30,11 @@ import {
   useDeleteProject,
   useGetProjectsByClient,
   useUpdateProject,
+  useUpdatePaymentMethodsForProject,
 } from "JS/React/Hooks/Projects/Hook";
 import { useCreateInvoice } from "JS/React/Hooks/Invoices/Hook";
+import { useGetStripePaymentMethodsByClientId } from "JS/React/Hooks/PaymentMethods/Hook";
+import { SelectComponent } from "JS/React/Components/SelectComponent";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
@@ -50,6 +53,18 @@ export const ProjectsComponent = () => {
   const [menuAnchorEl, setMenuAnchorEl] = useState<null | HTMLElement>(null);
   const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
 
+  // Payment methods dialog state
+  const [openPaymentMethodsDialog, setOpenPaymentMethodsDialog] =
+    useState(false);
+  const [selectedPaymentMethodIds, setSelectedPaymentMethodIds] = useState<
+    string[]
+  >([]);
+  const [paymentMethodProjectId, setPaymentMethodProjectId] = useState<
+    string | null
+  >(null);
+  const [paymentMethodProjectName, setPaymentMethodProjectName] =
+    useState<string>("");
+
   // Invoice creation state
   const [openCreateInvoiceDialog, setOpenCreateInvoiceDialog] = useState(false);
   const [invoiceAmount, setInvoiceAmount] = useState("");
@@ -65,6 +80,10 @@ export const ProjectsComponent = () => {
   const { projectsData, projectsIsLoading, refetchProjects } =
     useGetProjectsByClient(selectedClient?.id || null);
 
+  // Get Stripe payment methods for the selected client
+  const { stripePaymentMethods, stripePaymentMethodsIsLoading } =
+    useGetStripePaymentMethodsByClientId(selectedClient?.id || null);
+
   // Create project mutation
   const { createProject, createProjectIsLoading } = useCreateProject();
 
@@ -73,6 +92,10 @@ export const ProjectsComponent = () => {
 
   // Delete project mutation
   const { deleteProject, deleteProjectIsLoading } = useDeleteProject();
+
+  // Update payment methods mutation
+  const { updatePaymentMethodsForProject, updatePaymentMethodsIsLoading } =
+    useUpdatePaymentMethodsForProject();
 
   // Create invoice mutation
   const { createInvoice, createInvoiceIsLoading } = useCreateInvoice();
@@ -224,6 +247,32 @@ export const ProjectsComponent = () => {
     }
   };
 
+  // Handle open payment methods dialog
+  const handleOpenPaymentMethodsDialog = (projectId: string) => {
+    const project = projectsData.find((p) => p.id === projectId);
+    setPaymentMethodProjectId(projectId);
+    setPaymentMethodProjectName(project?.name || "");
+    setSelectedPaymentMethodIds(project?.paymentMethodIds || []);
+    setOpenPaymentMethodsDialog(true);
+  };
+
+  // Handle update payment methods
+  const handleUpdatePaymentMethods = async () => {
+    if (!paymentMethodProjectId) return;
+
+    try {
+      await updatePaymentMethodsForProject({
+        projectId: paymentMethodProjectId,
+        paymentMethodIds: selectedPaymentMethodIds,
+      });
+
+      setOpenPaymentMethodsDialog(false);
+      refetchProjects();
+    } catch (error) {
+      console.error("Error updating payment methods:", error);
+    }
+  };
+
   if (!selectedClient) {
     return (
       <Typography variant="h5" sx={{ padding: 3 }}>
@@ -317,27 +366,41 @@ export const ProjectsComponent = () => {
                     }}
                   >
                     {isClient && (
-                      <Button
-                        variant="outlined"
-                        color="primary"
-                        onClick={() => handleAddPaymentMethod(project.id!)}
-                        fullWidth
-                      >
-                        Add Payment Method
-                      </Button>
+                      <>
+                        <Button
+                          variant="outlined"
+                          color="primary"
+                          onClick={() => handleAddPaymentMethod(project.id!)}
+                          fullWidth
+                        >
+                          Add Payment Method
+                        </Button>
+                        <Button
+                          variant="outlined"
+                          color="primary"
+                          onClick={() =>
+                            handleOpenPaymentMethodsDialog(project.id!)
+                          }
+                          fullWidth
+                        >
+                          Update Payment Methods
+                        </Button>
+                      </>
                     )}
 
                     {isSuperAdmin && (
-                      <Button
-                        variant="outlined"
-                        color="success"
-                        onClick={() =>
-                          handleOpenCreateInvoiceDialog(project.id!)
-                        }
-                        fullWidth
-                      >
-                        Create Invoice
-                      </Button>
+                      <>
+                        <Button
+                          variant="outlined"
+                          color="success"
+                          onClick={() =>
+                            handleOpenCreateInvoiceDialog(project.id!)
+                          }
+                          fullWidth
+                        >
+                          Create Invoice
+                        </Button>
+                      </>
                     )}
                   </Box>
                 </CardContent>
@@ -504,6 +567,72 @@ export const ProjectsComponent = () => {
           </DialogActions>
         </Dialog>
       </LocalizationProvider>
+
+      {/* Payment Methods Selection Dialog */}
+      <Dialog
+        open={openPaymentMethodsDialog}
+        onClose={() => setOpenPaymentMethodsDialog(false)}
+        PaperProps={{
+          sx: {
+            maxHeight: "500px",
+            overflow: "visible",
+            maxWidth: "500px",
+            width: "100%",
+            position: "relative",
+            zIndex: 1200,
+          },
+        }}
+      >
+        <DialogTitle>
+          Update Payment Methods for {paymentMethodProjectName}
+        </DialogTitle>
+        <DialogContent sx={{ overflow: "visible", position: "relative" }}>
+          {stripePaymentMethodsIsLoading ? (
+            <Box sx={{ display: "flex", justifyContent: "center", p: 4 }}>
+              <CircularProgress />
+            </Box>
+          ) : stripePaymentMethods.length === 0 ? (
+            <Typography variant="body1" color="textSecondary" sx={{ py: 2 }}>
+              No payment methods available. Please add payment methods first.
+            </Typography>
+          ) : (
+            <Box sx={{ position: "relative", zIndex: 1300 }}>
+              <SelectComponent
+                title="Payment Methods"
+                placeholder="Select payment methods"
+                options={stripePaymentMethods.map((method) => ({
+                  value: method.id,
+                  label: `${method.card?.brand?.toUpperCase() || "CARD"} **** ${
+                    method.card?.last4 || "****"
+                  }`,
+                }))}
+                selectedValues={selectedPaymentMethodIds}
+                onChange={setSelectedPaymentMethodIds}
+                isMulti={true}
+              />
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenPaymentMethodsDialog(false)}>
+            Cancel
+          </Button>
+          <Button
+            onClick={handleUpdatePaymentMethods}
+            variant="contained"
+            color="primary"
+            disabled={
+              updatePaymentMethodsIsLoading || stripePaymentMethods.length === 0
+            }
+          >
+            {updatePaymentMethodsIsLoading ? (
+              <CircularProgress size={24} />
+            ) : (
+              "Save"
+            )}
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* Project Menu */}
       <Menu

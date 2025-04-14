@@ -46,6 +46,8 @@ export const useQueryKeys = () => {
       list: () => [...paymentMethod.all, "list"] as const,
       clientPaymentMethods: (clientId: string) =>
         [...paymentMethod.all, `client-${clientId}`] as const,
+      stripePaymentMethods: (clientId: string) =>
+        [...paymentMethod.all, `client-${clientId}`, "stripe"] as const,
     }),
     []
   );

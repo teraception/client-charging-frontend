@@ -203,3 +203,44 @@ export const useAddPaymentMethodToProject = () => {
     addPaymentMethodResponse: data,
   };
 };
+
+/**
+ * Hook to update payment methods for a project
+ */
+export const useUpdatePaymentMethodsForProject = () => {
+  const { projectService } = useAppServiceContext();
+  const queryClient = useQueryClient();
+  const { project } = useQueryKeys();
+
+  const {
+    mutateAsync,
+    isPending: isLoading,
+    data,
+  } = useMutation({
+    mutationFn: async ({
+      projectId,
+      paymentMethodIds,
+    }: {
+      projectId: string;
+      paymentMethodIds: string[];
+    }) => {
+      const response = await projectService.updatePaymentMethodsForProject(
+        projectId,
+        paymentMethodIds
+      );
+      return response;
+    },
+    onSuccess: (response) => {
+      // Invalidate project details
+      queryClient.invalidateQueries({
+        queryKey: project.details(response?.data?.id),
+      });
+    },
+  });
+
+  return {
+    updatePaymentMethodsForProject: mutateAsync,
+    updatePaymentMethodsIsLoading: isLoading,
+    updatePaymentMethodsResponse: data,
+  };
+};

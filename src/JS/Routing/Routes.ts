@@ -39,6 +39,8 @@ export const routesForContext = () => (params?: RouteParams) => {
           getPaymentMethods: () => `${base}/payment-method`,
           getClientPaymentMethods: (clientId: string) =>
             `${base}/payment-method/client/${clientId}`,
+          getStripePaymentMethodsByClientId: (clientId: string) =>
+            `${base}/payment-method/client/${clientId}/stripe-list`,
         },
         project: {
           create: () => `${base}/project`,
@@ -49,6 +51,8 @@ export const routesForContext = () => (params?: RouteParams) => {
           details: (projectId: string) => `${base}/project/${projectId}`,
           addPaymentMethod: (projectId: string, paymentMethodId: string) =>
             `${base}/project/${projectId}/payment-method/${paymentMethodId}`,
+          updatePaymentMethod: (projectId: string) =>
+            `${base}/project/${projectId}/payment-methods`,
         },
         invoice: {
           create: () => `${base}/invoice`,

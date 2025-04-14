@@ -49,3 +49,26 @@ export const useGetClientPaymentMethods = (clientId: string | null) => {
     clientPaymentMethodsResponse: data,
   };
 };
+
+export const useGetStripePaymentMethodsByClientId = (
+  clientId: string | null
+) => {
+  const { paymentMethodService } = useAppServiceContext();
+  const { paymentMethod } = useQueryKeys();
+
+  const { data, isLoading } = useQuery({
+    queryKey: paymentMethod.stripePaymentMethods(clientId || ""),
+    enabled: !!clientId,
+    queryFn: async () => {
+      const response =
+        await paymentMethodService.getStripePaymentMethodsByClientId(clientId!);
+      return response;
+    },
+  });
+
+  return {
+    stripePaymentMethods: data?.data || [],
+    stripePaymentMethodsIsLoading: isLoading,
+    stripePaymentMethodsResponse: data,
+  };
+};
