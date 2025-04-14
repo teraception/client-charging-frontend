@@ -17,6 +17,7 @@ import { useLoggedInUser } from "../../Routing/Context/LoggedInUseContextProvide
 import { ClientSelector } from "JS/React/Components/ClientSelector";
 import FolderIcon from "@mui/icons-material/Folder";
 import { useSelectedClient } from "JS/React/Context/SelectedClientContext";
+import ReceiptIcon from "@mui/icons-material/Receipt";
 
 const styles = (props: any, theme: Theme) => {
   return {
@@ -248,6 +249,15 @@ const Component = (props: BackendSidebarProps) => {
         skip: false,
         route: provider.react.paymentMethods(),
         icon: <AddCardIcon className={classes.iconColor} />,
+      });
+      sideBarItems.push({
+        identifier: "invoices",
+        title: "Invoices",
+        hasChilds: false,
+        button: true,
+        skip: false,
+        route: provider.react.invoicesList(),
+        icon: <ReceiptIcon className={classes.iconColor} />,
       });
     }
 

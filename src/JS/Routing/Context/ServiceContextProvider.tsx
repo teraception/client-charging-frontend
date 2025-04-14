@@ -3,12 +3,14 @@ import { UserService } from "JS/Services/Users/Service";
 import { ClientService } from "JS/Services/Clients/Service";
 import { PaymentMethodService } from "JS/Services/Payment-method/Service";
 import { ProjectService } from "JS/Services/Projects/Service";
+import { InvoiceService } from "JS/Services/Invoices/Service";
 
 export interface ServiceContextType {
   userService: UserService;
   clientService: ClientService;
   paymentMethodService: PaymentMethodService;
   projectService: ProjectService;
+  invoiceService: InvoiceService;
 }
 
 const ServiceContext = createContext<ServiceContextType>(null);
@@ -32,7 +34,7 @@ export const ServiceContextProvider = ({
   const clientService = new ClientService();
   const paymentMethodService = new PaymentMethodService();
   const projectService = new ProjectService();
-
+  const invoiceService = new InvoiceService();
   return (
     <ServiceContext.Provider
       value={{
@@ -40,6 +42,7 @@ export const ServiceContextProvider = ({
         clientService,
         paymentMethodService,
         projectService,
+        invoiceService,
       }}
     >
       {children}

@@ -17,6 +17,7 @@ import {
   Menu,
   MenuItem,
   CircularProgress,
+  FormHelperText,
 } from "@mui/material";
 import { useSelectedClient } from "JS/React/Context/SelectedClientContext";
 import AddIcon from "@mui/icons-material/Add";
@@ -30,13 +31,17 @@ import {
   useGetProjectsByClient,
   useUpdateProject,
 } from "JS/React/Hooks/Projects/Hook";
+import { useCreateInvoice } from "JS/React/Hooks/Invoices/Hook";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
+import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
+import { LocalizationProvider, DatePicker } from "@mui/x-date-pickers";
+import dayjs from "dayjs";
 
 export const ProjectsComponent = () => {
   const { selectedClient } = useSelectedClient();
-  const { isSuperAdmin } = useAccessHandler();
+  const { isSuperAdmin, isClient } = useAccessHandler();
   const [openNewProjectDialog, setOpenNewProjectDialog] = useState(false);
   const [openEditProjectDialog, setOpenEditProjectDialog] = useState(false);
   const [openDeleteConfirmation, setOpenDeleteConfirmation] = useState(false);
@@ -44,6 +49,13 @@ export const ProjectsComponent = () => {
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [menuAnchorEl, setMenuAnchorEl] = useState<null | HTMLElement>(null);
   const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
+
+  // Invoice creation state
+  const [openCreateInvoiceDialog, setOpenCreateInvoiceDialog] = useState(false);
+  const [invoiceAmount, setInvoiceAmount] = useState("");
+  const [invoiceDate, setInvoiceDate] = useState<Date | null>(new Date());
+  const [invoiceProjectId, setInvoiceProjectId] = useState<string | null>(null);
+  const [amountError, setAmountError] = useState("");
 
   const navigate = useNavigate();
   const { routeBuilder } = useRouting();
@@ -61,6 +73,9 @@ export const ProjectsComponent = () => {
 
   // Delete project mutation
   const { deleteProject, deleteProjectIsLoading } = useDeleteProject();
+
+  // Create invoice mutation
+  const { createInvoice, createInvoiceIsLoading } = useCreateInvoice();
 
   // Handle menu open
   const handleMenuOpen = (
@@ -155,6 +170,60 @@ export const ProjectsComponent = () => {
     );
   };
 
+  // Handle open create invoice dialog
+  const handleOpenCreateInvoiceDialog = (projectId: string) => {
+    setInvoiceProjectId(projectId);
+    setInvoiceAmount("");
+    setInvoiceDate(new Date());
+    setAmountError("");
+    setOpenCreateInvoiceDialog(true);
+  };
+
+  // Handle amount change with validation
+  const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setInvoiceAmount(value);
+
+    // Validate amount - must be a positive whole number
+    if (value && !/^\d+$/.test(value)) {
+      setAmountError("Please enter a valid whole number");
+    } else if (value && parseInt(value) <= 0) {
+      setAmountError("Amount must be greater than 0");
+    } else {
+      setAmountError("");
+    }
+  };
+
+  // Handle create invoice
+  const handleCreateInvoice = async () => {
+    if (
+      !selectedClient ||
+      !invoiceProjectId ||
+      !invoiceDate ||
+      amountError ||
+      !invoiceAmount
+    ) {
+      return;
+    }
+
+    try {
+      // Convert date to unix timestamp (milliseconds)
+      const chargeDate = dayjs(invoiceDate).unix();
+
+      await createInvoice({
+        clientId: selectedClient.id,
+        projectId: invoiceProjectId,
+        amount: parseInt(invoiceAmount),
+        chargeDate: chargeDate,
+      });
+
+      setOpenCreateInvoiceDialog(false);
+      // Could navigate to invoices page or show success message
+    } catch (error) {
+      console.error("Error creating invoice:", error);
+    }
+  };
+
   if (!selectedClient) {
     return (
       <Typography variant="h5" sx={{ padding: 3 }}>
@@ -238,8 +307,16 @@ export const ProjectsComponent = () => {
                   <Typography variant="body2" gutterBottom>
                     Payment Methods: {project.paymentMethodIds?.length || 0}
                   </Typography>
-                  {!isSuperAdmin && (
-                    <Box sx={{ mt: 2 }}>
+
+                  <Box
+                    sx={{
+                      mt: 2,
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: 1,
+                    }}
+                  >
+                    {isClient && (
                       <Button
                         variant="outlined"
                         color="primary"
@@ -248,8 +325,21 @@ export const ProjectsComponent = () => {
                       >
                         Add Payment Method
                       </Button>
-                    </Box>
-                  )}
+                    )}
+
+                    {isSuperAdmin && (
+                      <Button
+                        variant="outlined"
+                        color="success"
+                        onClick={() =>
+                          handleOpenCreateInvoiceDialog(project.id!)
+                        }
+                        fullWidth
+                      >
+                        Create Invoice
+                      </Button>
+                    )}
+                  </Box>
                 </CardContent>
               </Card>
             </Grid>
@@ -351,6 +441,69 @@ export const ProjectsComponent = () => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Create Invoice Dialog */}
+      <LocalizationProvider dateAdapter={AdapterDateFns}>
+        <Dialog
+          open={openCreateInvoiceDialog}
+          onClose={() => setOpenCreateInvoiceDialog(false)}
+        >
+          <DialogTitle>Create Invoice</DialogTitle>
+          <DialogContent>
+            <TextField
+              autoFocus
+              margin="dense"
+              label="Amount"
+              type="number"
+              fullWidth
+              variant="outlined"
+              value={invoiceAmount}
+              onChange={handleAmountChange}
+              error={!!amountError}
+              helperText={amountError}
+              InputProps={{
+                startAdornment: <Typography sx={{ mr: 1 }}>$</Typography>,
+                inputProps: { min: 1, step: 1 },
+              }}
+            />
+            <Box sx={{ mt: 2 }}>
+              <DatePicker
+                label="Charge Date"
+                value={invoiceDate}
+                onChange={(newDate) => setInvoiceDate(newDate)}
+                slotProps={{
+                  textField: {
+                    fullWidth: true,
+                    variant: "outlined",
+                  },
+                }}
+              />
+            </Box>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setOpenCreateInvoiceDialog(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleCreateInvoice}
+              variant="contained"
+              color="primary"
+              disabled={
+                !invoiceAmount ||
+                !!amountError ||
+                !invoiceDate ||
+                createInvoiceIsLoading
+              }
+            >
+              {createInvoiceIsLoading ? (
+                <CircularProgress size={24} />
+              ) : (
+                "Create"
+              )}
+            </Button>
+          </DialogActions>
+        </Dialog>
+      </LocalizationProvider>
 
       {/* Project Menu */}
       <Menu

@@ -50,6 +50,14 @@ export const routesForContext = () => (params?: RouteParams) => {
           addPaymentMethod: (projectId: string, paymentMethodId: string) =>
             `${base}/project/${projectId}/payment-method/${paymentMethodId}`,
         },
+        invoice: {
+          create: () => `${base}/invoice`,
+          getInvoices: () => `${base}/invoice`,
+          getInvoice: (invoiceId: string) => `${base}/invoice/${invoiceId}`,
+          getInvoiceByClientId: (clientId: string) =>
+            `${base}/invoice/client/${clientId}`,
+          delete: (invoiceId: string) => `${base}/invoice/${invoiceId}`,
+        },
       }))(`${config.baseApiUrl}`),
     },
 
@@ -63,8 +71,7 @@ export const routesForContext = () => (params?: RouteParams) => {
       dashboard: () => authorizedContext.buildUrl(`/`),
       users: () => authorizedContext.buildUrl(`/users`),
       clients: () => authorizedContext.buildUrl(`/clients`),
-
-      // routes for clients
+      invoicesList: () => authorizedContext.buildUrl(`/clients/invoices`),
       clientsList: () => authorizedContext.buildUrl(`/clients/list`),
       paymentMethods: () =>
         authorizedContext.buildUrl(`/clients/payment-methods`),

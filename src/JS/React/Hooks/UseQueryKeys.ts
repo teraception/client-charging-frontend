@@ -61,10 +61,21 @@ export const useQueryKeys = () => {
     []
   );
 
+  const invoice = useMemo(
+    () => ({
+      all: ["invoice"] as const,
+      listByClient: (clientId: string) =>
+        [...invoice.all, `client-${clientId}`] as const,
+      details: (invoiceId: string) =>
+        [...invoice.all, `invoice-${invoiceId}`] as const,
+    }),
+    []
+  );
   return {
     user,
     client,
     paymentMethod,
     project,
+    invoice,
   };
 };

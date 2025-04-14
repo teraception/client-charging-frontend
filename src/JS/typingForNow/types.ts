@@ -244,3 +244,30 @@ export interface StripePaymentMethod extends StripePaymentMethodType {
   dbLinkedProject: Project;
   dbLinkedPaymentMethod: PaymentMethod;
 }
+
+export interface Invoice {
+  id?: string;
+  platformInvoiceId?: string;
+  platformInvoiceItemId?: string;
+  clientId: string;
+  projectId: string;
+  amount: number;
+  chargeDate: number;
+  createdAt?: number;
+  updatedAt?: number;
+}
+export interface CreateInvoiceDto {
+  clientId: string;
+  projectId: string;
+  amount: number;
+  chargeDate: number;
+  platformInvoiceId?: string;
+  platformInvoiceItemId?: string;
+}
+
+export interface StripeInvoiceObj extends StripeInvoiceType {
+  dbInvoiceObject: Invoice;
+}
+
+// reference in backend
+export interface StripeInvoiceType {}

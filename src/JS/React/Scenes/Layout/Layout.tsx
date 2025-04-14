@@ -35,6 +35,7 @@ import { StripeIndex } from "JS/React/stripe/Index";
 import { PaymentSetupComplete } from "JS/React/stripe/SetupComplete";
 import { useSelectedClient } from "JS/React/Context/SelectedClientContext";
 import { ProjectsComponent } from "../Pages/projects/Projects";
+import Invoices from "../Pages/Invoices";
 
 const styles = (props: any, theme: Theme) => ({
   main: css({
@@ -136,6 +137,7 @@ export const Layout = (props: LayoutProps) => {
     <>
       <Route path={""} key={"dashboard"} element={<Dashboard />} />
       <Route path={"clients/projects"} element={<ProjectsComponent />} />
+      <Route path={"clients/invoices"} element={<Invoices />} />
       <Route
         path={"clients/payment-methods"}
         key={"paymentMethods"}
