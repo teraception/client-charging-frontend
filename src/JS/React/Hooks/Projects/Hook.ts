@@ -164,47 +164,6 @@ export const useDeleteProject = () => {
 };
 
 /**
- * Hook to add a payment method to a project
- */
-export const useAddPaymentMethodToProject = () => {
-  const { projectService } = useAppServiceContext();
-  const queryClient = useQueryClient();
-  const { project } = useQueryKeys();
-
-  const {
-    mutateAsync,
-    isPending: isLoading,
-    data,
-  } = useMutation({
-    mutationFn: async ({
-      projectId,
-      paymentMethodId,
-    }: {
-      projectId: string;
-      paymentMethodId: string;
-    }) => {
-      const response = await projectService.addPaymentMethodToProject(
-        projectId,
-        paymentMethodId
-      );
-      return response;
-    },
-    onSuccess: (response) => {
-      // Invalidate project details
-      queryClient.invalidateQueries({
-        queryKey: project.details(response?.data?.id),
-      });
-    },
-  });
-
-  return {
-    addPaymentMethodToProject: mutateAsync,
-    addPaymentMethodIsLoading: isLoading,
-    addPaymentMethodResponse: data,
-  };
-};
-
-/**
  * Hook to update payment methods for a project
  */
 export const useUpdatePaymentMethodsForProject = () => {

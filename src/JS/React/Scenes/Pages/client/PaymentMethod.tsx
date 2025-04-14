@@ -1,4 +1,15 @@
-import { CircularProgress, Grid, Theme, Typography } from "@mui/material";
+import {
+  CircularProgress,
+  Grid,
+  Theme,
+  Typography,
+  Button,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Box,
+} from "@mui/material";
 import { css } from "@emotion/react";
 import { StyleClassKey, makeStyles } from "JS/React/Style/styleHelper";
 import { useGetClientPaymentMethods } from "JS/React/Hooks/PaymentMethods/Hook";
@@ -6,11 +17,14 @@ import { StandardProps } from "JS/React/Types/Style";
 import { useSelectedClient } from "JS/React/Context/SelectedClientContext";
 import { useAccessHandler } from "JS/React/Hooks/AccessHandler";
 import { processValidityState } from "JS/types";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   MaterialReactTable,
   useMaterialReactTable,
 } from "material-react-table";
+import AddIcon from "@mui/icons-material/Add";
+import { useNavigate } from "react-router";
+import { useRouting } from "JS/React/Hooks/Routes";
 
 const styles = (props: any, theme: Theme) => ({
   root: css({
@@ -30,7 +44,10 @@ export const PaymentMethodComponent = (props: PaymentMethodComponentProps) => {
   const {} = props;
   const classes = useStyles();
   const { selectedClient } = useSelectedClient();
-  const { isSuperAdmin } = useAccessHandler();
+  const { isSuperAdmin, isClient } = useAccessHandler();
+  const navigate = useNavigate();
+  const { routeBuilder } = useRouting();
+  const routeProvider = routeBuilder();
 
   // Get client-specific payment methods when a client is selected
   const {
@@ -45,31 +62,43 @@ export const PaymentMethodComponent = (props: PaymentMethodComponentProps) => {
 
   const isLoading = clientPaymentMethodsIsLoading;
 
+  const handleAddPaymentMethod = () => {
+    if (selectedClient) {
+      navigate(routeProvider.react.addPaymentMethod(selectedClient.id));
+    }
+  };
+
   const paymentMethodColumns = useMemo(
     () => [
+      {
+        accessorKey: "project",
+        header: "Project Name",
+        enableHiding: false,
+        accessorFn: (row: any) => row.dbLinkedProject?.name || "-",
+      },
       {
         accessorKey: "brand",
         header: "Card Brand",
         enableHiding: false,
-        accessorFn: (row: any) => row.card?.brand || "N/A",
+        accessorFn: (row: any) => row.card?.brand || "-",
       },
       {
         accessorKey: "last4",
         header: "Last 4 Digits",
         enableHiding: false,
-        accessorFn: (row: any) => row.card?.last4 || "N/A",
+        accessorFn: (row: any) => row.card?.last4 || "-",
       },
       {
         accessorKey: "expMonth",
         header: "Expiry Month",
         enableHiding: false,
-        accessorFn: (row: any) => row.card?.exp_month || "N/A",
+        accessorFn: (row: any) => row.card?.exp_month || "-",
       },
       {
         accessorKey: "expYear",
         header: "Expiry Year",
         enableHiding: false,
-        accessorFn: (row: any) => row.card?.exp_year || "N/A",
+        accessorFn: (row: any) => row.card?.exp_year || "-",
       },
     ],
     []
@@ -89,8 +118,24 @@ export const PaymentMethodComponent = (props: PaymentMethodComponentProps) => {
 
   return (
     <Grid container className={classes.root}>
-      <Grid item container mb={3}>
+      <Grid
+        item
+        container
+        mb={3}
+        justifyContent="space-between"
+        alignItems="center"
+      >
         <Typography variant="h4">Payment Methods</Typography>
+        {isClient && (
+          <Button
+            variant="contained"
+            color="primary"
+            startIcon={<AddIcon />}
+            onClick={() => handleAddPaymentMethod()}
+          >
+            Add Payment Method
+          </Button>
+        )}
       </Grid>
       <Grid container xs={12}>
         <Grid item xs={12}>

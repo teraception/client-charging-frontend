@@ -85,18 +85,21 @@ export const useDeleteInvoice = () => {
   } = useMutation({
     mutationFn: async ({
       invoiceId,
-      clientId,
+      dbInvoiceId,
     }: {
       invoiceId: string;
-      clientId: string;
+      dbInvoiceId: string;
     }) => {
-      const response = await invoiceService.deleteInvoice(invoiceId);
-      return { response, clientId };
+      const response = await invoiceService.deleteInvoice(
+        invoiceId,
+        dbInvoiceId
+      );
+      return response;
     },
     onSuccess: (data) => {
       // Invalidate invoices list for this client
       queryClient.invalidateQueries({
-        queryKey: invoice.listByClient(data.clientId),
+        queryKey: invoice.all,
       });
     },
   });

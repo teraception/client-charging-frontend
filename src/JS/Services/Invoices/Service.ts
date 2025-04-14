@@ -37,11 +37,13 @@ export class InvoiceService extends BaseService {
   }
 
   deleteInvoice(
-    invoiceId: string
+    invoiceId: string,
+    dbInvoiceId: string
   ): Promise<WithValidityState<AppResponse<boolean>>> {
     return this.doServerXHR<boolean>({
-      url: this.activeRoute().server.api.invoice.delete(invoiceId),
+      url: this.activeRoute().server.api.invoice.delete(dbInvoiceId),
       method: "DELETE",
+      data: { invoiceId },
     });
   }
 }

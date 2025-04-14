@@ -49,8 +49,6 @@ export const routesForContext = () => (params?: RouteParams) => {
             `${base}/project/client/${clientId}`,
           delete: (projectId: string) => `${base}/project/${projectId}`,
           details: (projectId: string) => `${base}/project/${projectId}`,
-          addPaymentMethod: (projectId: string, paymentMethodId: string) =>
-            `${base}/project/${projectId}/payment-method/${paymentMethodId}`,
           updatePaymentMethod: (projectId: string) =>
             `${base}/project/${projectId}/payment-methods`,
         },
@@ -79,10 +77,8 @@ export const routesForContext = () => (params?: RouteParams) => {
       clientsList: () => authorizedContext.buildUrl(`/clients/list`),
       paymentMethods: () =>
         authorizedContext.buildUrl(`/clients/payment-methods`),
-      addPaymentMethod: (clientId: string, projectId: string) =>
-        authorizedContext.buildUrl(
-          `/clients/${clientId}/project/${projectId}/payment-methods/add`
-        ),
+      addPaymentMethod: (clientId: string) =>
+        authorizedContext.buildUrl(`/clients/${clientId}/payment-methods/add`),
       projects: () => authorizedContext.buildUrl(`/clients/projects`),
       projectDetails: (projectId: string) =>
         authorizedContext.buildUrl(`/clients/projects/${projectId}`),

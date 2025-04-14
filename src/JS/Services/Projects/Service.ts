@@ -68,22 +68,6 @@ export class ProjectService extends BaseService {
   }
 
   /**
-   * Add a payment method to a project
-   */
-  addPaymentMethodToProject(
-    projectId: string,
-    paymentMethodId: string
-  ): Promise<WithValidityState<AppResponse<Project>>> {
-    return this.doServerXHR<Project>({
-      url: this.activeRoute().server.api.project.addPaymentMethod(
-        projectId,
-        paymentMethodId
-      ),
-      method: "POST",
-    });
-  }
-
-  /**
    * Update payment methods for a project
    */
   updatePaymentMethodsForProject(

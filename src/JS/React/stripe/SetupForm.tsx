@@ -59,8 +59,6 @@ export const PaymentSetupForm = () => {
       projectId: projectId,
     });
 
-    console.log("(^&)*B&tyhuxqc0iu", res, returnUrl);
-
     // Confirm the SetupIntent using the details collected by the Payment Element
     const { error } = await stripe.confirmSetup({
       elements: elements as StripeElements,
@@ -82,17 +80,74 @@ export const PaymentSetupForm = () => {
     setLoading(false);
   };
   return (
-    <form onSubmit={handleSubmit} className="form-container">
-      <h2 className="form-title">Set Up Payment Method</h2>
-      <PaymentElement />
+    <form
+      onSubmit={handleSubmit}
+      style={{
+        maxWidth: "500px",
+        margin: "0 auto",
+        padding: "2rem",
+        borderRadius: "8px",
+        boxShadow:
+          "0 4px 6px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.08)",
+        backgroundColor: "#fff",
+      }}
+      className="form-container"
+    >
+      <h2
+        style={{
+          fontSize: "1.5rem",
+          marginBottom: "1.5rem",
+          color: "#333",
+          textAlign: "center",
+          fontWeight: "600",
+        }}
+        className="form-title"
+      >
+        Set Up Payment Method
+      </h2>
+      <div style={{ marginBottom: "1.5rem" }}>
+        <PaymentElement />
+      </div>
       <button
         type="submit"
         disabled={!stripe || loading || createPaymentMethodLoader}
+        style={{
+          width: "100%",
+          padding: "0.75rem 1rem",
+          backgroundColor:
+            !stripe || loading || createPaymentMethodLoader
+              ? "#94a3b8"
+              : "#4f46e5",
+          color: "white",
+          border: "none",
+          borderRadius: "6px",
+          fontSize: "1rem",
+          fontWeight: "500",
+          cursor:
+            !stripe || loading || createPaymentMethodLoader
+              ? "not-allowed"
+              : "pointer",
+          transition: "background-color 0.2s ease-in-out",
+          marginTop: "0.5rem",
+        }}
         className="submit-button"
       >
-        Submit
+        {loading || createPaymentMethodLoader ? "Processing..." : "Submit"}
       </button>
-      {errorMessage && <div>{errorMessage}</div>}
+      {errorMessage && (
+        <div
+          style={{
+            color: "#ef4444",
+            marginTop: "1rem",
+            padding: "0.75rem",
+            backgroundColor: "#fee2e2",
+            borderRadius: "4px",
+            fontSize: "0.875rem",
+          }}
+        >
+          {errorMessage}
+        </div>
+      )}
     </form>
   );
 };

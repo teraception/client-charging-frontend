@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import {
   Typography,
   Button,
@@ -15,30 +15,30 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  TextField,
   CircularProgress,
   Divider,
-  Menu,
-  MenuItem,
   Chip,
 } from "@mui/material";
 import { useSelectedClient } from "JS/React/Context/SelectedClientContext";
 import { useAccessHandler } from "JS/React/Hooks/AccessHandler";
 import {
   useGetInvoicesByClient,
-  useCreateInvoice,
   useDeleteInvoice,
 } from "JS/React/Hooks/Invoices/Hook";
 import DeleteIcon from "@mui/icons-material/Delete";
-import MoreVertIcon from "@mui/icons-material/MoreVert";
 import dayjs from "dayjs";
 
 const Invoices = () => {
   const { selectedClient } = useSelectedClient();
   const { isSuperAdmin } = useAccessHandler();
   const [openDeleteConfirmation, setOpenDeleteConfirmation] = useState(false);
-  const [activeInvoiceId, setActiveInvoiceId] = useState<string | null>(null);
-  const [menuAnchorEl, setMenuAnchorEl] = useState<null | HTMLElement>(null);
+  const [activeInvoiceData, setActiveInvoiceData] = useState<{
+    invoiceId: string;
+    dbInvoiceId: string;
+  }>({
+    invoiceId: "",
+    dbInvoiceId: "",
+  });
 
   // Get invoices for the selected client
   const { invoicesData, invoicesIsLoading, refetchInvoices } =
@@ -47,35 +47,19 @@ const Invoices = () => {
   // Delete invoice mutation
   const { deleteInvoice, deleteInvoiceIsLoading } = useDeleteInvoice();
 
-  // Handle menu open
-  const handleMenuOpen = (
-    event: React.MouseEvent<HTMLElement>,
-    invoiceId: string
-  ) => {
-    setMenuAnchorEl(event.currentTarget);
-    setActiveInvoiceId(invoiceId);
-  };
-
-  // Handle menu close
-  const handleMenuClose = () => {
-    setMenuAnchorEl(null);
-    setActiveInvoiceId(null);
-  };
-
   // Handle delete invoice
   const handleDeleteClick = () => {
     setOpenDeleteConfirmation(true);
-    handleMenuClose();
   };
 
   // Handle confirm delete invoice
   const handleConfirmDelete = async () => {
-    if (!activeInvoiceId || !selectedClient) return;
+    if (!activeInvoiceData.invoiceId || !activeInvoiceData.dbInvoiceId) return;
 
     try {
       await deleteInvoice({
-        invoiceId: activeInvoiceId,
-        clientId: selectedClient.id,
+        invoiceId: activeInvoiceData.invoiceId,
+        dbInvoiceId: activeInvoiceData.dbInvoiceId,
       });
 
       setOpenDeleteConfirmation(false);
@@ -87,7 +71,6 @@ const Invoices = () => {
 
   // Format date from timestamp
   const formatDate = (timestamp: number) => {
-    console.log("098759127850c9821", timestamp);
     return dayjs(timestamp * 1000).format("DD/MM/YYYY");
   };
 
@@ -137,6 +120,7 @@ const Invoices = () => {
                 <TableCell>Project</TableCell>
                 <TableCell>Total Amount</TableCell>
                 <TableCell>Due Date</TableCell>
+                <TableCell>Created At</TableCell>
                 <TableCell>Status</TableCell>
                 {isSuperAdmin && <TableCell align="right">Actions</TableCell>}
               </TableRow>
@@ -147,6 +131,7 @@ const Invoices = () => {
                   <TableCell>{invoice.dbInvoiceObject.projectId}</TableCell>
                   <TableCell>{formatAmount(invoice.total)}</TableCell>
                   <TableCell>{formatDate(invoice.due_date)}</TableCell>
+                  <TableCell>{formatDate(invoice.created)}</TableCell>
                   <TableCell>
                     <Chip
                       label={invoice.status}
@@ -155,6 +140,8 @@ const Invoices = () => {
                           ? "success"
                           : invoice.status === "pending"
                           ? "warning"
+                          : invoice.status === "draft"
+                          ? "secondary"
                           : "info"
                       }
                       size="small"
@@ -163,17 +150,20 @@ const Invoices = () => {
                   </TableCell>
                   {isSuperAdmin && (
                     <TableCell align="right">
-                      {/* <IconButton
-                        aria-label="more"
-                        aria-controls="invoice-menu"
-                        aria-haspopup="true"
-                        onClick={(e) =>
-                          handleMenuOpen(e, invoice.dbInvoiceObject.id!)
-                        }
-                        size="small"
-                      >
-                        <MoreVertIcon />
-                      </IconButton> */}
+                      {invoice.status_transitions.finalized_at == null && (
+                        <IconButton
+                          onClick={(e) => {
+                            setActiveInvoiceData({
+                              invoiceId: invoice.dbInvoiceObject.id,
+                              dbInvoiceId: invoice.id,
+                            });
+                            handleDeleteClick();
+                          }}
+                          size="small"
+                        >
+                          <DeleteIcon />
+                        </IconButton>
+                      )}
                     </TableCell>
                   )}
                 </TableRow>
@@ -209,20 +199,6 @@ const Invoices = () => {
           </Button>
         </DialogActions>
       </Dialog>
-
-      {/* Invoice Menu */}
-      <Menu
-        id="invoice-menu"
-        anchorEl={menuAnchorEl}
-        keepMounted
-        open={Boolean(menuAnchorEl)}
-        onClose={handleMenuClose}
-      >
-        <MenuItem onClick={handleDeleteClick}>
-          <DeleteIcon fontSize="small" sx={{ mr: 1 }} />
-          Delete
-        </MenuItem>
-      </Menu>
     </Box>
   );
 };

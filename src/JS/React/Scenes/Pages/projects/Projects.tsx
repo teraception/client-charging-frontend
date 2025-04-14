@@ -1,26 +1,21 @@
-import React, { useEffect, useState } from "react";
+import React, { useState, useMemo } from "react";
 import {
   Typography,
   Button,
-  Card,
-  CardContent,
-  Grid,
   Box,
   TextField,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
-  Paper,
   Divider,
   IconButton,
-  Menu,
-  MenuItem,
   CircularProgress,
-  FormHelperText,
 } from "@mui/material";
 import { useSelectedClient } from "JS/React/Context/SelectedClientContext";
 import AddIcon from "@mui/icons-material/Add";
+import EditIcon from "@mui/icons-material/Edit";
+import DeleteIcon from "@mui/icons-material/Delete";
 import { Project } from "JS/typingForNow/types";
 import { useNavigate } from "react-router";
 import { useRouting } from "JS/React/Hooks/Routes";
@@ -35,12 +30,14 @@ import {
 import { useCreateInvoice } from "JS/React/Hooks/Invoices/Hook";
 import { useGetStripePaymentMethodsByClientId } from "JS/React/Hooks/PaymentMethods/Hook";
 import { SelectComponent } from "JS/React/Components/SelectComponent";
-import MoreVertIcon from "@mui/icons-material/MoreVert";
-import DeleteIcon from "@mui/icons-material/Delete";
-import EditIcon from "@mui/icons-material/Edit";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { LocalizationProvider, DatePicker } from "@mui/x-date-pickers";
 import dayjs from "dayjs";
+import {
+  MaterialReactTable,
+  useMaterialReactTable,
+  MRT_ColumnDef,
+} from "material-react-table";
 
 export const ProjectsComponent = () => {
   const { selectedClient } = useSelectedClient();
@@ -135,13 +132,12 @@ export const ProjectsComponent = () => {
   };
 
   // Handle edit project
-  const handleEditProject = () => {
-    const project = projectsData.find((p) => p.id === activeProjectId);
+  const handleEditProject = (projectId: string) => {
+    const project = projectsData.find((p) => p.id === projectId);
     if (project) {
       setEditingProject(project);
       setOpenEditProjectDialog(true);
     }
-    handleMenuClose();
   };
 
   // Handle update project
@@ -162,12 +158,6 @@ export const ProjectsComponent = () => {
     }
   };
 
-  // Handle delete project
-  const handleDeleteClick = () => {
-    setOpenDeleteConfirmation(true);
-    handleMenuClose();
-  };
-
   // Handle confirm delete project
   const handleConfirmDelete = async () => {
     if (!activeProjectId || !selectedClient) return;
@@ -183,14 +173,6 @@ export const ProjectsComponent = () => {
     } catch (error) {
       console.error("Error deleting project:", error);
     }
-  };
-
-  // Handle add payment method
-  const handleAddPaymentMethod = (projectId: string) => {
-    // Navigate to payment method page
-    navigate(
-      routeProvider.react.addPaymentMethod(selectedClient?.id!, projectId)
-    );
   };
 
   // Handle open create invoice dialog
@@ -273,6 +255,112 @@ export const ProjectsComponent = () => {
     }
   };
 
+  // Define table columns
+  const columns = useMemo<MRT_ColumnDef<Project>[]>(
+    () => [
+      {
+        accessorKey: "name",
+        header: "Project Name",
+        size: 180,
+      },
+      {
+        accessorKey: "createdAt",
+        header: "Created Date",
+        Cell: ({ row }) => (
+          <span>{new Date(row.original.createdAt).toLocaleDateString()}</span>
+        ),
+        size: 150,
+      },
+      {
+        accessorKey: "paymentMethodIds",
+        header: "Payment Methods",
+        Cell: ({ row }) => (
+          <span>{row.original.paymentMethodIds?.length || 0}</span>
+        ),
+        size: 150,
+      },
+      {
+        id: "actions",
+        header: "Actions",
+        Cell: ({ row }) => (
+          <Box sx={{ display: "flex", gap: "8px" }}>
+            {isClient && (
+              <>
+                <Button
+                  variant="outlined"
+                  size="small"
+                  onClick={() =>
+                    handleOpenPaymentMethodsDialog(row.original.id!)
+                  }
+                >
+                  Update Payments
+                </Button>
+              </>
+            )}
+            {isSuperAdmin && (
+              <>
+                <IconButton
+                  size="small"
+                  onClick={() => handleEditProject(row.original.id!)}
+                  color="primary"
+                >
+                  <EditIcon fontSize="small" />
+                </IconButton>
+                <IconButton
+                  size="small"
+                  onClick={() => {
+                    setActiveProjectId(row.original.id!);
+                    setOpenDeleteConfirmation(true);
+                  }}
+                  color="error"
+                >
+                  <DeleteIcon fontSize="small" />
+                </IconButton>
+                <Button
+                  variant="outlined"
+                  size="small"
+                  color="success"
+                  onClick={() =>
+                    handleOpenCreateInvoiceDialog(row.original.id!)
+                  }
+                >
+                  Create Invoice
+                </Button>
+              </>
+            )}
+          </Box>
+        ),
+        size: 350,
+      },
+    ],
+    [isClient, isSuperAdmin]
+  );
+
+  // Initialize table
+  const table = useMaterialReactTable({
+    columns,
+    data: projectsData || [],
+    enableFullScreenToggle: false,
+    enableColumnOrdering: true,
+    enableGlobalFilter: true,
+    initialState: { density: "compact" },
+    muiPaginationProps: {
+      rowsPerPageOptions: [10, 25, 50],
+    },
+    state: {
+      isLoading: projectsIsLoading,
+    },
+    renderEmptyRowsFallback: () => (
+      <Box sx={{ textAlign: "center", p: 2 }}>
+        <Typography variant="body1" color="textSecondary">
+          {isSuperAdmin
+            ? 'No projects found. Create a new project using the "New Project" button.'
+            : "No projects available for this client. Please contact an administrator."}
+        </Typography>
+      </Box>
+    ),
+  });
+
   if (!selectedClient) {
     return (
       <Typography variant="h5" sx={{ padding: 3 }}>
@@ -306,109 +394,7 @@ export const ProjectsComponent = () => {
 
       <Divider sx={{ mb: 3 }} />
 
-      {projectsIsLoading ? (
-        <Box sx={{ display: "flex", justifyContent: "center", p: 4 }}>
-          <CircularProgress />
-        </Box>
-      ) : projectsData.length === 0 ? (
-        <Paper sx={{ p: 3, textAlign: "center" }}>
-          <Typography variant="body1" color="textSecondary">
-            {isSuperAdmin
-              ? 'No projects found. Create a new project using the "New Project" button.'
-              : "No projects available for this client. Please contact an administrator."}
-          </Typography>
-        </Paper>
-      ) : (
-        <Grid container spacing={3}>
-          {projectsData.map((project) => (
-            <Grid item xs={12} md={6} lg={4} key={project.id}>
-              <Card>
-                <CardContent>
-                  <Box
-                    sx={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "flex-start",
-                    }}
-                  >
-                    <Typography variant="h6" gutterBottom>
-                      {project.name}
-                    </Typography>
-                    {isSuperAdmin && (
-                      <IconButton
-                        aria-label="more"
-                        aria-controls="project-menu"
-                        aria-haspopup="true"
-                        onClick={(e) => handleMenuOpen(e, project.id!)}
-                        size="small"
-                      >
-                        <MoreVertIcon />
-                      </IconButton>
-                    )}
-                  </Box>
-                  <Typography
-                    variant="body2"
-                    color="textSecondary"
-                    gutterBottom
-                  >
-                    Created: {new Date(project.createdAt).toLocaleDateString()}
-                  </Typography>
-                  <Typography variant="body2" gutterBottom>
-                    Payment Methods: {project.paymentMethodIds?.length || 0}
-                  </Typography>
-
-                  <Box
-                    sx={{
-                      mt: 2,
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: 1,
-                    }}
-                  >
-                    {isClient && (
-                      <>
-                        <Button
-                          variant="outlined"
-                          color="primary"
-                          onClick={() => handleAddPaymentMethod(project.id!)}
-                          fullWidth
-                        >
-                          Add Payment Method
-                        </Button>
-                        <Button
-                          variant="outlined"
-                          color="primary"
-                          onClick={() =>
-                            handleOpenPaymentMethodsDialog(project.id!)
-                          }
-                          fullWidth
-                        >
-                          Update Payment Methods
-                        </Button>
-                      </>
-                    )}
-
-                    {isSuperAdmin && (
-                      <>
-                        <Button
-                          variant="outlined"
-                          color="success"
-                          onClick={() =>
-                            handleOpenCreateInvoiceDialog(project.id!)
-                          }
-                          fullWidth
-                        >
-                          Create Invoice
-                        </Button>
-                      </>
-                    )}
-                  </Box>
-                </CardContent>
-              </Card>
-            </Grid>
-          ))}
-        </Grid>
-      )}
+      <MaterialReactTable table={table} />
 
       {/* New Project Dialog */}
       <Dialog
@@ -633,24 +619,6 @@ export const ProjectsComponent = () => {
           </Button>
         </DialogActions>
       </Dialog>
-
-      {/* Project Menu */}
-      <Menu
-        id="project-menu"
-        anchorEl={menuAnchorEl}
-        keepMounted
-        open={Boolean(menuAnchorEl)}
-        onClose={handleMenuClose}
-      >
-        <MenuItem onClick={handleEditProject}>
-          <EditIcon fontSize="small" sx={{ mr: 1 }} />
-          Edit
-        </MenuItem>
-        <MenuItem onClick={handleDeleteClick}>
-          <DeleteIcon fontSize="small" sx={{ mr: 1 }} />
-          Delete
-        </MenuItem>
-      </Menu>
     </Box>
   );
 };
