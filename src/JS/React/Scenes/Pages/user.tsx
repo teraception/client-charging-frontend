@@ -6,6 +6,7 @@ import {
   Switch,
   Theme,
   Tooltip,
+  Typography,
 } from "@mui/material";
 import { css } from "@emotion/react";
 import { StyleClassKey, makeStyles } from "JS/React/Style/styleHelper";
@@ -216,6 +217,9 @@ export const UserComponent = (props: UserComponentProps) => {
 
   return (
     <Grid xs={12} container>
+      <Grid item container mb={3}>
+        <Typography variant="h4">Users</Typography>
+      </Grid>
       <Grid container xs={12}>
         <Grid item xs={12}>
           <MaterialReactTable table={usersTable} />

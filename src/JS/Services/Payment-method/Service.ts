@@ -1,7 +1,11 @@
 import { AppResponse } from "JS/types/Response";
 import { WithValidityState } from "JS/types";
 import { BaseService } from "../BaseService";
-import { CreatePaymentMethodDto, PaymentMethod } from "JS/typingForNow/types";
+import {
+  CreatePaymentMethodDto,
+  PaymentMethod,
+  StripePaymentMethod,
+} from "JS/typingForNow/types";
 
 export class PaymentMethodService extends BaseService {
   createPaymentMethod(
@@ -11,6 +15,32 @@ export class PaymentMethodService extends BaseService {
       url: this.activeRoute().server.api.paymentMethod.createPaymentMethod(),
       method: "POST",
       data: { ...params },
+    });
+  }
+
+  /**
+   * Get all payment methods
+   */
+  getPaymentMethods(): Promise<
+    WithValidityState<AppResponse<PaymentMethod[]>>
+  > {
+    return this.doServerXHR<PaymentMethod[]>({
+      url: this.activeRoute().server.api.paymentMethod.getPaymentMethods(),
+      method: "GET",
+    });
+  }
+
+  /**
+   * Get payment methods for a specific client
+   */
+  getClientPaymentMethods(
+    clientId: string
+  ): Promise<WithValidityState<AppResponse<StripePaymentMethod[]>>> {
+    return this.doServerXHR<StripePaymentMethod[]>({
+      url: this.activeRoute().server.api.paymentMethod.getClientPaymentMethods(
+        clientId
+      ),
+      method: "GET",
     });
   }
 }

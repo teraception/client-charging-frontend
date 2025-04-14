@@ -42,14 +42,29 @@ export const useQueryKeys = () => {
 
   const paymentMethod = useMemo(
     () => ({
-      all: ["payment-method"] as const,
+      all: ["paymentMethod"] as const,
       list: () => [...paymentMethod.all, "list"] as const,
+      clientPaymentMethods: (clientId: string) =>
+        [...paymentMethod.all, `client-${clientId}`] as const,
     }),
     []
   );
+
+  const project = useMemo(
+    () => ({
+      all: ["project"] as const,
+      listByClient: (clientId: string) =>
+        [...project.all, `client-${clientId}`] as const,
+      details: (projectId: string) =>
+        [...project.all, `project-${projectId}`] as const,
+    }),
+    []
+  );
+
   return {
     user,
     client,
     paymentMethod,
+    project,
   };
 };

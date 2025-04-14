@@ -1,6 +1,6 @@
 import React, { ReactNode, useState } from "react";
 import { defaultTo } from "lodash-es";
-import { DrawerProps, List, Theme } from "@mui/material";
+import { DrawerProps, List, Theme, Divider, Box } from "@mui/material";
 import { css } from "@emotion/react";
 import { StandardProps } from "JS/React/Types/Style";
 import { StyleClassKey, makeStyles } from "JS/React/Style/styleHelper";
@@ -15,6 +15,9 @@ import { withRouter } from "JS/Routing/RouteComponent/WithRoute";
 import { useAccessHandler } from "JS/React/Hooks/AccessHandler";
 import { useLoggedInUser } from "../../Routing/Context/LoggedInUseContextProvider";
 import AccessibilityIcon from "@mui/icons-material/Accessibility";
+import { ClientSelector } from "JS/React/Components/ClientSelector";
+import FolderIcon from "@mui/icons-material/Folder";
+import { useSelectedClient } from "JS/React/Context/SelectedClientContext";
 
 const styles = (props: any, theme: Theme) => {
   return {
@@ -80,6 +83,7 @@ const Component = (props: BackendSidebarProps) => {
   const { linkProvider } = useRouting();
   const { isClient, isSuperAdmin } = useAccessHandler();
   const { loggedInUser } = useLoggedInUser();
+  const { selectedClient } = useSelectedClient();
   const routeProvider = linkProvider;
   function getStateForItem(identifier: string): SidebarItemState {
     const state = defaultTo(itemsState[identifier], {
@@ -206,6 +210,8 @@ const Component = (props: BackendSidebarProps) => {
     }>[] = [];
 
     locationItems = [];
+
+    // Super admin menu items
     if (isSuperAdmin) {
       locationItems.push({
         identifier: "users",
@@ -216,26 +222,19 @@ const Component = (props: BackendSidebarProps) => {
         route: provider.react.users(),
         icon: <PeopleIcon className={classes.iconColor} />,
       });
-      locationItems.push({
-        identifier: "clients",
-        title: "Clients",
-        hasChilds: false,
-        button: true,
-        skip: false,
-        route: provider.react.clients(),
-        icon: <AccessibilityIcon className={classes.iconColor} />,
-      });
+      // locationItems.push({
+      //   identifier: "clients",
+      //   title: "Clients",
+      //   hasChilds: false,
+      //   button: true,
+      //   skip: false,
+      //   route: provider.react.clients(),
+      //   icon: <AccessibilityIcon className={classes.iconColor} />,
+      // });
     }
-    if (isClient) {
-      locationItems.push({
-        identifier: "clientsList",
-        title: "Clients",
-        hasChilds: false,
-        button: true,
-        skip: false,
-        route: provider.react.clientsList(),
-        icon: <PeopleIcon className={classes.iconColor} />,
-      });
+
+    // Client user menu items - only show if a client is selected
+    if (isClient && selectedClient) {
       locationItems.push({
         identifier: "paymentMethods",
         title: "Payment Methods",
@@ -247,7 +246,20 @@ const Component = (props: BackendSidebarProps) => {
       });
     }
 
-    let sideBarItems: SidebarItemProps[] = locationItems;
+    let sideBarItems: SidebarItemProps[] = [...locationItems];
+
+    // Only add Projects menu item when a client is selected
+    if (selectedClient || isSuperAdmin) {
+      sideBarItems.push({
+        identifier: "projects",
+        title: "Projects",
+        hasChilds: false,
+        button: true,
+        skip: false,
+        route: provider.react.projects(),
+        icon: <FolderIcon className={classes.iconColor} />,
+      });
+    }
 
     sideBarItems = filterItems(sideBarItems).map(setCommonItemProps);
     setActive(sideBarItems);
@@ -256,9 +268,15 @@ const Component = (props: BackendSidebarProps) => {
 
   function getSidebarNav(items: SidebarItemProps[]): ReactNode {
     return (
-      <List className={classes.navListDynamic}>
-        {items.map((item) => buildSidebarItems(item))}
-      </List>
+      <>
+        <Box sx={{ mt: 2 }}>
+          <ClientSelector />
+          <Divider sx={{ my: 1, backgroundColor: "white" }} />
+        </Box>
+        <List className={classes.navListDynamic}>
+          {items.map((item) => buildSidebarItems(item))}
+        </List>
+      </>
     );
   }
 

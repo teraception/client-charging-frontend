@@ -1,7 +1,15 @@
 import React, { Fragment, useEffect, useMemo, useState } from "react";
 import Helmet from "react-helmet";
 import HeaderContainer from "JS/React/Components/HeadContainer";
-import { CircularProgress, Grid, Menu, MenuItem, Theme } from "@mui/material";
+import {
+  CircularProgress,
+  Grid,
+  Menu,
+  MenuItem,
+  Theme,
+  Typography,
+  Box,
+} from "@mui/material";
 import { css } from "@emotion/react";
 import { StyleClassKey, makeStyles } from "JS/React/Style/styleHelper";
 import BackendSidebar from "JS/React/Container/SidebarDriver";
@@ -24,10 +32,11 @@ import { NoAccessComponent } from "../Pages/NoAccess";
 import AppButton from "JS/React/Components/AppButton";
 import { Role } from "JS/typingForNow/types";
 import { ClientComponent } from "../Pages/client";
-import { ClientsListComponent } from "../Pages/client/ClientsList";
 import { PaymentMethodComponent } from "../Pages/client/PaymentMethod";
 import { StripeIndex } from "JS/React/stripe/Index";
 import { PaymentSetupComplete } from "JS/React/stripe/SetupComplete";
+import { useSelectedClient } from "JS/React/Context/SelectedClientContext";
+import { ProjectsComponent } from "../Pages/projects/Projects";
 
 // import { useLoggedInUser } from "JS/Routing/Context/ServiceContextProvider";
 
@@ -88,6 +97,7 @@ export const Layout = (props: LayoutProps) => {
   const navigate = useNavigate();
   const { logOut } = useAuth();
   const { loggedInUser } = useLoggedInUser();
+  const { selectedClient } = useSelectedClient();
   const [sidebarState, setSidebarOpened] = useState(true);
   const [loggedOutLoader, setLoggedOutLoader] = useState<boolean>(false);
   const [showUserActionDropdown, setShowUserActionDropdown] =
@@ -112,9 +122,24 @@ export const Layout = (props: LayoutProps) => {
     });
   }, []);
 
+  // Effect to handle client selection and routing
+  useEffect(() => {
+    const currentPath = window.location.pathname;
+
+    // For client users with selected client, redirect to projects if on dashboard
+    if (
+      isClient &&
+      selectedClient &&
+      currentPath === routeProvider.react.dashboard()
+    ) {
+      navigate(routeProvider.react.projects());
+    }
+  }, [selectedClient, isClient, navigate, routeProvider]);
+
   const commonRoutes = (
     <>
       <Route path={""} key={"dashboard"} element={<Dashboard />} />
+      <Route path={"projects"} element={<ProjectsComponent />} />
     </>
   );
 
@@ -127,14 +152,11 @@ export const Layout = (props: LayoutProps) => {
       <Route path={"clients"} key={"clients"} element={<ClientComponent />} />
     </Routes>
   );
+
   const clientRoutes = (
     <Routes>
       {commonRoutes}
-      <Route
-        path={"clients/list"}
-        key={"clientsList"}
-        element={<ClientsListComponent />}
-      />
+
       <Route
         path={"clients/payment-methods"}
         key={"paymentMethods"}
@@ -146,41 +168,20 @@ export const Layout = (props: LayoutProps) => {
         element={<PaymentSetupComplete />}
       />
       <Route
-        path="clients/:id/payment-methods/add"
+        path="clients/:id/project/:projectId/payment-methods/add"
         key={"paymentSetup"}
         element={<StripeIndex />}
       />
     </Routes>
   );
 
-  const hrRoutes = (
-    <Routes>
-      {/* <Route path={"organization/:organizationId"}>
-        <Route path={"location/:locationId"}>
-          <Route path={"employee-salary"}>
-            <Route index key={"EmployeeSalary"} element={<EmployeeSalary />} />
-          </Route>
-        </Route>
-      </Route> */}
-      {commonRoutes}
-      <Route path={"*"} element={<NoAccessComponent />} />
-    </Routes>
-  );
-
   return (
     <Fragment>
       <Helmet>
-        <title>Home</title>
+        <title>Dashboard</title>
       </Helmet>
       <HeaderContainer>
-        <Grid
-          container
-          // xs={3}
-          // ml={3}
-          // mr={3}
-          justifyContent={"end"}
-          alignItems={"center"}
-        >
+        <Grid container justifyContent={"end"} alignItems={"center"}>
           <AppButton
             buttonVariant="emp-text"
             variant="text"
@@ -208,14 +209,6 @@ export const Layout = (props: LayoutProps) => {
               horizontal: "left",
             }}
           >
-            {/* <MenuItem
-              onClick={() => {
-                setShowUserActionDropdown(false);
-                navigate(routeProvider.react.users());
-              }}
-            >
-              Edit Profile
-            </MenuItem> */}
             <MenuItem
               onClick={async () => {
                 setShowUserActionDropdown(false);
@@ -240,7 +233,35 @@ export const Layout = (props: LayoutProps) => {
               [classes.hideScroll]: layoutContextValue.hideScroll,
             })}
           >
-            {isSuperAdmin ? superAdminRoutes : clientRoutes}
+            {isSuperAdmin && !selectedClient ? (
+              <ClientComponent />
+            ) : selectedClient ? (
+              isSuperAdmin ? (
+                superAdminRoutes
+              ) : (
+                clientRoutes
+              )
+            ) : isClient ? (
+              <Box sx={{ p: 3, textAlign: "center" }}>
+                <Typography variant="h5" gutterBottom>
+                  Welcome to the Dashboard
+                </Typography>
+                <Typography>
+                  Please select a client from the dropdown in the sidebar to
+                  access your projects and payment methods.
+                </Typography>
+              </Box>
+            ) : (
+              <Box sx={{ p: 3, textAlign: "center" }}>
+                <Typography variant="h5" gutterBottom>
+                  Please select a client
+                </Typography>
+                <Typography>
+                  Select a client from the dropdown in the sidebar to view
+                  content.
+                </Typography>
+              </Box>
+            )}
           </div>
         </div>
       </LayoutContext.Provider>

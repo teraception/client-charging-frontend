@@ -1,3 +1,5 @@
+import { PaymentMethod as StripePaymentMethodType } from "@stripe/stripe-js";
+
 export interface PaginatedMeta {
   totalItems: number;
   start: number;
@@ -192,10 +194,12 @@ export function getRoleDisplayName(role?: Role) {
 }
 
 export interface Client {
-  id: string;
+  id?: string;
   name: string;
-  createdAt: number;
-  updatedAt: number;
+  customerId?: string;
+  projectIds?: string[];
+  createdAt?: number;
+  updatedAt?: number;
 }
 
 export interface CreateClientDTO {
@@ -208,11 +212,35 @@ export interface UpdateClientDTO {
   userId?: string;
 }
 
-export interface PaymentMethod {
-  id: string;
+export interface Project {
+  id?: string;
+  name: string;
   clientId: string;
-  customerId: string;
+  paymentMethodIds?: string[];
+  createdAt?: number;
+  updatedAt?: number;
+}
+export interface CreateProjectDto {
+  name: string;
+  paymentMethodIds?: string[];
+  clientId: string;
+}
+
+export type PaymentIntegrationType = "stripe" | "paypal";
+export interface PaymentMethod {
+  id?: string;
+  clientId: string;
+  paymentIntegrationType: PaymentIntegrationType;
+  paymentSetupIntentId?: string;
+  createdAt?: number;
+  updatedAt?: number;
 }
 export interface CreatePaymentMethodDto {
   clientId: string;
+  projectId: string;
+}
+
+export interface StripePaymentMethod extends StripePaymentMethodType {
+  dbLinkedProject: Project;
+  dbLinkedPaymentMethod: PaymentMethod;
 }

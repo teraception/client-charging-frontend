@@ -1,4 +1,11 @@
-import { Box, CircularProgress, Grid, IconButton, Theme } from "@mui/material";
+import {
+  Box,
+  CircularProgress,
+  Grid,
+  IconButton,
+  Theme,
+  Typography,
+} from "@mui/material";
 import { css } from "@emotion/react";
 import { StyleClassKey, makeStyles } from "JS/React/Style/styleHelper";
 import {
@@ -35,7 +42,7 @@ export interface ClientComponentProps
 const styles = (props: any, theme: Theme) => {
   return {
     root: css({
-      padding: theme.spacing(2),
+      // padding: theme.spacing(2),
     }),
   };
 };
@@ -219,6 +226,9 @@ export const ClientComponent = (props: ClientComponentProps) => {
 
   return (
     <Grid xs={12} container className={classes.root}>
+      <Grid item container>
+        <Typography variant="h4">Clients</Typography>
+      </Grid>
       <Grid container xs={12}>
         <Grid item xs={12}>
           <Box display="flex" justifyContent="flex-end" mb={2} gap={2}>

@@ -14,7 +14,7 @@ const returnUrl = import.meta.env.VITE_STRIPE_RETURN_URL;
 export const PaymentSetupForm = () => {
   const stripe = useStripe();
   const elements = useElements();
-  const { id: routeClientId } = useParams();
+  const { id: routeClientId, projectId } = useParams();
 
   const {
     createPaymentMethod,
@@ -56,6 +56,7 @@ export const PaymentSetupForm = () => {
     // Create the SetupIntent and obtain clientSecret
     const res = await createPaymentMethod({
       clientId: routeClientId,
+      projectId: projectId,
     });
 
     console.log("(^&)*B&tyhuxqc0iu", res, returnUrl);

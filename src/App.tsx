@@ -11,6 +11,7 @@ import { LoggedInUserContextProvider } from "JS/Routing/Context/LoggedInUseConte
 import { ActiveContextProvider } from "JS/Routing/Context/ActiveContextProvider";
 import { ServiceContextProvider } from "JS/Routing/Context/ServiceContextProvider";
 import { initSentry } from "JS/telemetry/sentry/sentry";
+import { SelectedClientProvider } from "JS/React/Context/SelectedClientContext";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -37,7 +38,9 @@ function App() {
               <ServiceContextProvider>
                 <LoggedInUserContextProvider>
                   <ActiveContextProvider>
-                    <Root />
+                    <SelectedClientProvider>
+                      <Root />
+                    </SelectedClientProvider>
                   </ActiveContextProvider>
                 </LoggedInUserContextProvider>
               </ServiceContextProvider>
