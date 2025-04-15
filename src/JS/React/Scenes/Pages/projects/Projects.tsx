@@ -33,6 +33,7 @@ import { SelectComponent } from "JS/React/Components/SelectComponent";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { LocalizationProvider, DatePicker } from "@mui/x-date-pickers";
 import dayjs from "dayjs";
+import numeral from "numeral";
 import {
   MaterialReactTable,
   useMaterialReactTable,
@@ -188,16 +189,36 @@ export const ProjectsComponent = () => {
   // Handle amount change with validation
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    setInvoiceAmount(value);
 
-    // Validate amount - must be a positive whole number
-    if (value && !/^\d+$/.test(value)) {
-      setAmountError("Please enter a valid whole number");
-    } else if (value && parseInt(value) <= 0) {
+    // Remove all non-numeric characters except the decimal point
+    const rawValue = value.replace(/[^0-9.]/g, "");
+
+    // Only allow one decimal point
+    const parts = rawValue.split(".");
+    const sanitizedValue = parts[0] + (parts.length > 1 ? "." + parts[1] : "");
+
+    // Limit to 2 decimal places
+    const decimalParts = sanitizedValue.split(".");
+    let finalValue = decimalParts[0];
+    if (decimalParts.length > 1) {
+      finalValue += "." + decimalParts[1].substring(0, 2);
+    }
+
+    // Update the state with the raw value
+    setInvoiceAmount(finalValue);
+
+    // Validate the amount
+    if (finalValue && parseFloat(finalValue) <= 0) {
       setAmountError("Amount must be greater than 0");
     } else {
       setAmountError("");
     }
+  };
+
+  // Format currency for display elsewhere in the UI
+  const formatCurrency = (amount: string | number) => {
+    if (!amount) return "$0.00";
+    return "$" + numeral(amount).format("0,0.00");
   };
 
   // Handle create invoice
@@ -219,7 +240,7 @@ export const ProjectsComponent = () => {
       await createInvoice({
         clientId: selectedClient.id,
         projectId: invoiceProjectId,
-        amount: parseInt(invoiceAmount),
+        amount: parseFloat(invoiceAmount),
         chargeDate: chargeDate,
       });
 
@@ -503,17 +524,18 @@ export const ProjectsComponent = () => {
             <TextField
               autoFocus
               margin="dense"
-              label="Amount"
-              type="number"
+              label="Amount In Cents"
+              type="text"
               fullWidth
               variant="outlined"
               value={invoiceAmount}
               onChange={handleAmountChange}
               error={!!amountError}
-              helperText={amountError}
+              helperText={
+                amountError || "Enter amount with up to 2 decimal places"
+              }
               InputProps={{
                 startAdornment: <Typography sx={{ mr: 1 }}>$</Typography>,
-                inputProps: { min: 1, step: 1 },
               }}
             />
             <Box sx={{ mt: 2 }}>

@@ -95,7 +95,8 @@ const Invoices = () => {
       {
         accessorKey: "total",
         header: "Total Amount",
-        Cell: ({ row }) => formatAmount(row.original.total),
+        // converting to dollars
+        Cell: ({ row }) => formatAmount(row.original.total / 100),
         size: 150,
       },
       {
