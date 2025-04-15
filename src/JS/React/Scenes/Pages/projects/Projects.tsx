@@ -66,7 +66,9 @@ export const ProjectsComponent = () => {
   // Invoice creation state
   const [openCreateInvoiceDialog, setOpenCreateInvoiceDialog] = useState(false);
   const [invoiceAmount, setInvoiceAmount] = useState("");
-  const [invoiceDate, setInvoiceDate] = useState<Date | null>(new Date());
+  const [invoiceDate, setInvoiceDate] = useState<Date | null>(
+    new Date(new Date().setDate(new Date().getDate() + 1))
+  );
   const [invoiceProjectId, setInvoiceProjectId] = useState<string | null>(null);
   const [amountError, setAmountError] = useState("");
 
@@ -181,7 +183,7 @@ export const ProjectsComponent = () => {
   const handleOpenCreateInvoiceDialog = (projectId: string) => {
     setInvoiceProjectId(projectId);
     setInvoiceAmount("");
-    setInvoiceDate(new Date());
+    setInvoiceDate(new Date(new Date().setDate(new Date().getDate() + 1)));
     setAmountError("");
     setOpenCreateInvoiceDialog(true);
   };
@@ -543,6 +545,7 @@ export const ProjectsComponent = () => {
                 label="Charge Date"
                 value={invoiceDate}
                 onChange={(newDate) => setInvoiceDate(newDate)}
+                minDate={new Date(new Date().setDate(new Date().getDate() + 1))}
                 slotProps={{
                   textField: {
                     fullWidth: true,
