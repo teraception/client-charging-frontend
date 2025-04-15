@@ -99,12 +99,12 @@ export const ManageUsersDialog = ({
           width: "100%",
           maxWidth: "600px!important",
           maxHeight: "90vh",
-          overflow: "hidden",
+          overflow: "visible",
         },
       }}
     >
       <AppDialogTitle>Manage Users for {client?.name}</AppDialogTitle>
-      <AppDialogContent>
+      <AppDialogContent sx={{ overflow: "visible" }}>
         {isLoading ? (
           <Box display="flex" justifyContent="center" p={4}>
             <CircularProgress />
@@ -133,16 +133,45 @@ export const ManageUsersDialog = ({
                 PaperProps: {
                   sx: {
                     maxHeight: 300,
+                    overflow: "visible",
+                    zIndex: 9999,
+                    position: "absolute",
                   },
+                },
+                style: {
+                  zIndex: 9999,
                 },
               }}
               sx={{
                 minHeight: 50,
+                position: "relative",
+                zIndex: 1300,
                 "& .MuiOutlinedInput-root": {
                   padding: 1,
                 },
                 "& .MuiChip-root": {
                   margin: "2px",
+                },
+                "& .MuiPaper-root": {
+                  overflow: "visible",
+                  zIndex: 9999,
+                },
+                "& .MuiMenu-paper": {
+                  overflow: "visible",
+                  zIndex: 9999,
+                },
+                "& .MuiMenu-list": {
+                  overflow: "visible",
+                  paddingTop: 0,
+                  paddingBottom: 0,
+                },
+                "& .MuiPopover-root": {
+                  zIndex: 9999,
+                },
+                ".react-select__menu": {
+                  position: "absolute",
+                  zIndex: 9999,
+                  overflow: "visible",
                 },
               }}
             />

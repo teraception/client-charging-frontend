@@ -587,7 +587,7 @@ export const ProjectsComponent = () => {
               <SelectComponent
                 title="Payment Methods"
                 placeholder="Select payment methods"
-                options={stripePaymentMethods.map((method) => ({
+                options={(stripePaymentMethods || []).map((method) => ({
                   value: method.id,
                   label: `${method.card?.brand?.toUpperCase() || "CARD"} **** ${
                     method.card?.last4 || "****"
