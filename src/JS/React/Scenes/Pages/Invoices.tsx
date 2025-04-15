@@ -1,15 +1,9 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import {
   Typography,
   Button,
   Box,
   Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
   IconButton,
   Dialog,
   DialogTitle,
@@ -27,6 +21,12 @@ import {
 } from "JS/React/Hooks/Invoices/Hook";
 import DeleteIcon from "@mui/icons-material/Delete";
 import dayjs from "dayjs";
+import numeral from "numeral";
+import {
+  MaterialReactTable,
+  useMaterialReactTable,
+  MRT_ColumnDef,
+} from "material-react-table";
 
 const Invoices = () => {
   const { selectedClient } = useSelectedClient();
@@ -48,7 +48,11 @@ const Invoices = () => {
   const { deleteInvoice, deleteInvoiceIsLoading } = useDeleteInvoice();
 
   // Handle delete invoice
-  const handleDeleteClick = () => {
+  const handleDeleteClick = (invoiceId: string, dbInvoiceId: string) => {
+    setActiveInvoiceData({
+      invoiceId,
+      dbInvoiceId,
+    });
     setOpenDeleteConfirmation(true);
   };
 
@@ -74,10 +78,110 @@ const Invoices = () => {
     return dayjs(timestamp * 1000).format("DD/MM/YYYY");
   };
 
-  // Format amount to display with 2 decimal places
+  // Format amount to display with currency and commas using numeral
   const formatAmount = (amount: number) => {
-    return `$${amount?.toFixed(2)}`;
+    return numeral(amount).format("$0,0.00");
   };
+
+  // Define table columns
+  const columns = useMemo<MRT_ColumnDef<any>[]>(
+    () => [
+      {
+        accessorKey: "project.name",
+        header: "Project",
+        Cell: ({ row }) => row.original.project?.name || "-",
+        size: 180,
+      },
+      {
+        accessorKey: "total",
+        header: "Total Amount",
+        Cell: ({ row }) => formatAmount(row.original.total),
+        size: 150,
+      },
+      {
+        accessorKey: "due_date",
+        header: "Due Date",
+        Cell: ({ row }) => formatDate(row.original.due_date),
+        size: 150,
+      },
+      {
+        accessorKey: "created",
+        header: "Created At",
+        Cell: ({ row }) => formatDate(row.original.created),
+        size: 150,
+      },
+      {
+        accessorKey: "status",
+        header: "Status",
+        Cell: ({ row }) => (
+          <Chip
+            label={row.original.status}
+            color={
+              row.original.status === "paid"
+                ? "success"
+                : row.original.status === "pending"
+                ? "warning"
+                : row.original.status === "draft"
+                ? "secondary"
+                : "info"
+            }
+            size="small"
+            sx={{ fontWeight: "medium" }}
+          />
+        ),
+        size: 120,
+      },
+      ...(isSuperAdmin
+        ? [
+            {
+              id: "actions",
+              header: "Actions",
+              Cell: ({ row }) =>
+                row.original.status_transitions.finalized_at == null && (
+                  <IconButton
+                    onClick={() =>
+                      handleDeleteClick(
+                        row.original.id,
+                        row.original.dbInvoiceObject.id
+                      )
+                    }
+                    size="small"
+                    color="error"
+                  >
+                    <DeleteIcon fontSize="small" />
+                  </IconButton>
+                ),
+              align: "right",
+              size: 100,
+            },
+          ]
+        : []),
+    ],
+    [isSuperAdmin]
+  );
+
+  // Initialize table
+  const table = useMaterialReactTable({
+    columns,
+    data: invoicesData || [],
+    enableFullScreenToggle: false,
+    enableColumnOrdering: true,
+    enableGlobalFilter: true,
+    initialState: { density: "compact" },
+    muiPaginationProps: {
+      rowsPerPageOptions: [10, 25, 50],
+    },
+    state: {
+      isLoading: invoicesIsLoading,
+    },
+    renderEmptyRowsFallback: () => (
+      <Box sx={{ textAlign: "center", p: 2 }}>
+        <Typography variant="body1" color="textSecondary">
+          No invoices found for this client.
+        </Typography>
+      </Box>
+    ),
+  });
 
   if (!selectedClient) {
     return (
@@ -102,76 +206,7 @@ const Invoices = () => {
 
       <Divider sx={{ mb: 3 }} />
 
-      {invoicesIsLoading ? (
-        <Box sx={{ display: "flex", justifyContent: "center", p: 4 }}>
-          <CircularProgress />
-        </Box>
-      ) : invoicesData.length === 0 ? (
-        <Paper sx={{ p: 3, textAlign: "center" }}>
-          <Typography variant="body1" color="textSecondary">
-            No invoices found for this client.
-          </Typography>
-        </Paper>
-      ) : (
-        <TableContainer component={Paper}>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell>Project</TableCell>
-                <TableCell>Total Amount</TableCell>
-                <TableCell>Due Date</TableCell>
-                <TableCell>Created At</TableCell>
-                <TableCell>Status</TableCell>
-                {isSuperAdmin && <TableCell align="right">Actions</TableCell>}
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {invoicesData.map((invoice: any) => (
-                <TableRow key={invoice.dbInvoiceObject.id}>
-                  <TableCell>{invoice.dbInvoiceObject.projectId}</TableCell>
-                  <TableCell>{formatAmount(invoice.total)}</TableCell>
-                  <TableCell>{formatDate(invoice.due_date)}</TableCell>
-                  <TableCell>{formatDate(invoice.created)}</TableCell>
-                  <TableCell>
-                    <Chip
-                      label={invoice.status}
-                      color={
-                        invoice.status === "paid"
-                          ? "success"
-                          : invoice.status === "pending"
-                          ? "warning"
-                          : invoice.status === "draft"
-                          ? "secondary"
-                          : "info"
-                      }
-                      size="small"
-                      sx={{ fontWeight: "medium" }}
-                    />
-                  </TableCell>
-                  {isSuperAdmin && (
-                    <TableCell align="right">
-                      {invoice.status_transitions.finalized_at == null && (
-                        <IconButton
-                          onClick={(e) => {
-                            setActiveInvoiceData({
-                              invoiceId: invoice.dbInvoiceObject.id,
-                              dbInvoiceId: invoice.id,
-                            });
-                            handleDeleteClick();
-                          }}
-                          size="small"
-                        >
-                          <DeleteIcon />
-                        </IconButton>
-                      )}
-                    </TableCell>
-                  )}
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      )}
+      <MaterialReactTable table={table} />
 
       {/* Delete Confirmation Dialog */}
       <Dialog

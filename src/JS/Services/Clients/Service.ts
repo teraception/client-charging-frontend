@@ -5,6 +5,8 @@ import {
   Client,
   CreateClientDTO,
   UpdateClientDTO,
+  UpdateUserClientIdsDTO,
+  User,
 } from "JS/typingForNow/types";
 
 export class ClientService extends BaseService {
@@ -20,6 +22,29 @@ export class ClientService extends BaseService {
   ): Promise<WithValidityState<AppResponse<Client[]>>> {
     return this.doServerXHR<Client[]>({
       url: this.activeRoute().server.api.client.getClientsWithUserId(userId),
+      method: "GET",
+    });
+  }
+
+  updateUserClientIds(
+    data: UpdateUserClientIdsDTO
+  ): Promise<WithValidityState<AppResponse<Client>>> {
+    return this.doServerXHR<Client>({
+      url: this.activeRoute().server.api.client.updateUserClientIds(
+        data.clientId
+      ),
+      method: "PUT",
+      data,
+    });
+  }
+
+  getUsersListByClientId(
+    clientId: string
+  ): Promise<WithValidityState<AppResponse<User[]>>> {
+    return this.doServerXHR<User[]>({
+      url: this.activeRoute().server.api.client.getUsersListByClientId(
+        clientId
+      ),
       method: "GET",
     });
   }

@@ -5,15 +5,12 @@ import AppDialogContent from "../../../Components/AppDialogContent";
 import AppDialogFooter from "../../../Components/AppDialogFooter";
 import AppButton from "../../../Components/AppButton";
 import AppTextField from "../../../Components/AppTextField";
-import { AppSelect } from "../../../Components/AppSelect";
 import { DialogActions } from "@mui/material";
 import {
   Client,
   CreateClientDTO,
   UpdateClientDTO,
 } from "JS/typingForNow/types";
-import { useGetAllUsers } from "JS/React/Hooks/Users";
-import { Box, Typography } from "@mui/material";
 
 interface ClientDialogProps {
   open: boolean;
@@ -26,7 +23,6 @@ interface ClientDialogProps {
 
 interface ClientFormState {
   name: string;
-  userId: string;
   nameError: string;
 }
 
@@ -38,23 +34,28 @@ export const ClientDialog = ({
   client,
   mode,
 }: ClientDialogProps) => {
-  const { getAllUsersResponse, usersData } = useGetAllUsers();
   const [clientForm, setClientForm] = useState<ClientFormState>({
-    name: client?.name || "",
-    userId: "",
+    name: "",
     nameError: "",
   });
 
-  console.log("607yncifu", clientForm);
-
   useEffect(() => {
-    if (client) {
-      setClientForm((prev) => ({
-        ...prev,
-        name: client.name,
-      }));
+    // Reset form when dialog opens/closes or mode changes
+    if (open) {
+      if (mode === "edit" && client) {
+        setClientForm({
+          name: client.name || "",
+          nameError: "",
+        });
+      } else {
+        // Reset form for create mode
+        setClientForm({
+          name: "",
+          nameError: "",
+        });
+      }
     }
-  }, [client]);
+  }, [open, mode, client]);
 
   const validateName = (name: string) => {
     if (!name) {
@@ -71,28 +72,12 @@ export const ClientDialog = ({
     validateName(name);
   };
 
-  const handleUserIdChange = (
-    data: { value: string; label: string } | null
-  ) => {
-    setClientForm((prev) => ({ ...prev, userId: data?.value || "" }));
-  };
-
-  const getSelectedUser = () => {
-    if (!clientForm.userId) return null;
-    const user = usersData?.find((x) => x.id === clientForm.userId);
-    return user ? { value: user.id, label: user.name || user.email } : null;
-  };
-
   const handleSave = async () => {
     if (validateName(clientForm.name)) {
-      const data =
-        mode === "create"
-          ? { name: clientForm.name, userId: clientForm.userId }
-          : { name: clientForm.name };
+      const data = { name: clientForm.name };
       await onSave(data);
       setClientForm({
         name: "",
-        userId: "",
         nameError: "",
       });
     }
@@ -126,56 +111,6 @@ export const ClientDialog = ({
           error={!!clientForm.nameError}
           helperText={clientForm.nameError}
         />
-        {mode === "create" && (
-          <Box sx={{ mt: 2, position: "relative", zIndex: 2 }}>
-            <Typography
-              variant="subtitle1"
-              sx={{ mb: 1, color: "text.secondary" }}
-            >
-              Assign User
-            </Typography>
-            <AppSelect
-              label="Select User"
-              value={getSelectedUser()}
-              onChange={handleUserIdChange}
-              options={
-                usersData?.map((user) => ({
-                  value: user.id,
-                  label: user.name || user.email,
-                })) || []
-              }
-              fullWidth
-              margin="normal"
-              disabled={loading}
-              MenuProps={{
-                PaperProps: {
-                  sx: {
-                    maxHeight: 300,
-                  },
-                },
-                anchorOrigin: {
-                  vertical: "bottom",
-                  horizontal: "left",
-                },
-                transformOrigin: {
-                  vertical: "top",
-                  horizontal: "left",
-                },
-              }}
-              sx={{
-                "& .MuiOutlinedInput-root": {
-                  backgroundColor: "background.paper",
-                  "&:hover .MuiOutlinedInput-notchedOutline": {
-                    borderColor: "primary.main",
-                  },
-                },
-                "& .MuiSelect-select": {
-                  padding: "12px 14px",
-                },
-              }}
-            />
-          </Box>
-        )}
       </AppDialogContent>
       <AppDialogFooter>
         <DialogActions>
@@ -186,12 +121,7 @@ export const ClientDialog = ({
             variant="contained"
             color="primary"
             onClick={handleSave}
-            disabled={
-              !clientForm.name ||
-              !!clientForm.nameError ||
-              (mode === "create" && !clientForm.userId) ||
-              loading
-            }
+            disabled={!clientForm.name || !!clientForm.nameError || loading}
           >
             {mode === "create" ? "Create" : "Update"}
           </AppButton>

@@ -36,6 +36,8 @@ export const useQueryKeys = () => {
         [...client.all, `user-${userId}`] as const,
       details: (clientId: string) =>
         [...client.all, `client-${clientId}`] as const,
+      usersList: (clientId: string) =>
+        [...client.all, `client-${clientId}`, "users-list"] as const,
     }),
     []
   );

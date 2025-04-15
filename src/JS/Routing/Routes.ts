@@ -33,6 +33,10 @@ export const routesForContext = () => (params?: RouteParams) => {
           invite: () => `${base}/client/invite`,
           getClientsWithUserId: (userId: string) =>
             `${base}/client/user-clients/${userId}`,
+          updateUserClientIds: (clientId: string) =>
+            `${base}/client/update-user-client-ids/${clientId}`,
+          getUsersListByClientId: (clientId: string) =>
+            `${base}/client/users-list/${clientId}`,
         },
         paymentMethod: {
           createPaymentMethod: () => `${base}/payment-method`,

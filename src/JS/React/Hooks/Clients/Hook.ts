@@ -5,6 +5,7 @@ import {
   Client,
   CreateClientDTO,
   UpdateClientDTO,
+  UpdateUserClientIdsDTO,
 } from "JS/typingForNow/types";
 
 export const useGetAllClients = () => {
@@ -150,5 +151,45 @@ export const useGetClientsWithUserId = (userId: string) => {
     clientsData: data?.data,
     getClientsWithUserIdLoader: isLoading,
     getClientsWithUserIdResponse: data,
+  };
+};
+
+export const useUpdateUserClientIds = () => {
+  const { clientService } = useAppServiceContext();
+  const queryClient = useQueryClient();
+  const { client } = useQueryKeys();
+  const { data, mutateAsync, isPending } = useMutation({
+    mutationFn: async (data: UpdateUserClientIdsDTO) => {
+      const response = await clientService.updateUserClientIds(data);
+      return response;
+    },
+    onSuccess: (_, varia) => {
+      queryClient.invalidateQueries({
+        queryKey: client.usersList(varia.clientId),
+      });
+    },
+  });
+  return {
+    updateUserClientIds: mutateAsync,
+    updateUserClientIdsResponse: data,
+    updateUserClientIdsLoader: isPending,
+  };
+};
+
+export const useGetUsersListByClientId = (clientId: string) => {
+  const { clientService } = useAppServiceContext();
+  const { client } = useQueryKeys();
+  const { data, isLoading } = useQuery({
+    queryKey: client.usersList(clientId),
+    enabled: !!clientId,
+    queryFn: async () => {
+      const response = await clientService.getUsersListByClientId(clientId);
+      return response;
+    },
+  });
+  return {
+    usersData: data?.data,
+    getUsersListByClientIdLoader: isLoading,
+    getUsersListByClientIdResponse: data,
   };
 };

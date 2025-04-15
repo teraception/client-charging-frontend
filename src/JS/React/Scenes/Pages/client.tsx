@@ -23,6 +23,7 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import PersonAddIcon from "@mui/icons-material/PersonAdd";
 import EditIcon from "@mui/icons-material/Edit";
 import AddIcon from "@mui/icons-material/Add";
+import PeopleIcon from "@mui/icons-material/People";
 import {
   MaterialReactTable,
   useMaterialReactTable,
@@ -32,6 +33,7 @@ import { StatusCode } from "JS/typingForNow/types";
 import AppButton from "JS/React/Components/AppButton";
 import { InviteClientDialog } from "JS/React/Scenes/Partials/Client/InviteClientDialog";
 import { ClientDialog } from "JS/React/Scenes/Partials/Client/ClientDialog";
+import { ManageUsersDialog } from "JS/React/Scenes/Partials/Client/ManageUsersDialog";
 import { Client } from "JS/typingForNow/types";
 
 export type ClientComponentClassKey = StyleClassKey<typeof useStyles>;
@@ -66,6 +68,8 @@ export const ClientComponent = (props: ClientComponentProps) => {
 
   const [showInviteDialog, setShowInviteDialog] = useState<boolean>(false);
   const [showClientDialog, setShowClientDialog] = useState<boolean>(false);
+  const [showManageUsersDialog, setShowManageUsersDialog] =
+    useState<boolean>(false);
   const [selectedClient, setSelectedClient] = useState<Client | undefined>(
     undefined
   );
@@ -126,6 +130,11 @@ export const ClientComponent = (props: ClientComponentProps) => {
     setShowClientDialog(true);
   };
 
+  const handleManageUsers = (client: Client) => {
+    setSelectedClient(client);
+    setShowManageUsersDialog(true);
+  };
+
   const handleCreateClick = () => {
     setSelectedClient(undefined);
     setDialogMode("create");
@@ -170,6 +179,9 @@ export const ClientComponent = (props: ClientComponentProps) => {
       <Box>
         <IconButton onClick={() => handleEditClient(row.original as Client)}>
           <EditIcon color="action" />
+        </IconButton>
+        <IconButton onClick={() => handleManageUsers(row.original as Client)}>
+          <PeopleIcon color="action" />
         </IconButton>
         <IconButton
           onClick={() => {
@@ -274,6 +286,14 @@ export const ClientComponent = (props: ClientComponentProps) => {
         }
         client={selectedClient}
         mode={dialogMode}
+      />
+      <ManageUsersDialog
+        open={showManageUsersDialog}
+        onClose={() => {
+          setShowManageUsersDialog(false);
+          setSelectedClient(undefined);
+        }}
+        client={selectedClient}
       />
     </Grid>
   );

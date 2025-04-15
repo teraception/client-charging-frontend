@@ -204,12 +204,15 @@ export interface Client {
 
 export interface CreateClientDTO {
   name: string;
-  userId?: string;
 }
 
 export interface UpdateClientDTO {
   name?: string;
-  userId?: string;
+}
+
+export interface UpdateUserClientIdsDTO {
+  userIds: string[];
+  clientId: string;
 }
 
 export interface Project {
@@ -267,6 +270,7 @@ export interface CreateInvoiceDto {
 
 export interface StripeInvoiceObj extends StripeInvoiceType {
   dbInvoiceObject: Invoice;
+  project?: Project | null;
 }
 
 // reference in backend

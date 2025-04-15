@@ -134,6 +134,7 @@ export const ProjectsComponent = () => {
   // Handle edit project
   const handleEditProject = (projectId: string) => {
     const project = projectsData.find((p) => p.id === projectId);
+
     if (project) {
       setEditingProject(project);
       setOpenEditProjectDialog(true);

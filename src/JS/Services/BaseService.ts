@@ -8,10 +8,21 @@ import {
   extractResponseErrors,
 } from "JS/types/Response";
 import { Response, StatusCode } from "JS/typingForNow/types";
+import { enqueueSnackbar } from "notistack";
 // import {
 //   StatusCode,
 //   type Response,
 // } from "@teraception/client-payment-integration-lib";
+
+// Common HTTP error messages
+const HTTP_ERROR_MESSAGES = {
+  400: "Bad Request: The server could not process the request",
+  401: "Unauthorized: Authentication is required",
+  403: "Forbidden: You do not have permission to access this resource",
+  404: "Not Found: The requested resource was not found",
+  500: "Server Error: Something went wrong on our end",
+  503: "Service Unavailable: The server is temporarily unavailable",
+};
 
 export class BaseService {
   private manager: AxiosInstance;
@@ -92,8 +103,46 @@ export class BaseService {
         if (error.response) {
           console.log("error.response", error.response);
           const response = error.response;
+
+          // Display appropriate error message using notistack
+          const statusCode = response.status;
+          const errorMessage =
+            response.data?.message ||
+            HTTP_ERROR_MESSAGES[statusCode] ||
+            "An unexpected error occurred";
+
+          // Capture in Sentry for monitoring
+          Sentry.captureException(error, {
+            level: "error",
+            contexts: {
+              response: {
+                status: statusCode,
+                data: response.data,
+              },
+            },
+          });
+
+          // Show error notification
+          enqueueSnackbar(errorMessage, {
+            variant: "error",
+            autoHideDuration: 3000,
+          });
+
           return response.data;
         } else {
+          // Network errors, timeouts, etc.
+          const errorMessage =
+            error.message || "Network error: Unable to connect to the server";
+
+          Sentry.captureException(error, {
+            level: "error",
+          });
+
+          enqueueSnackbar(errorMessage, {
+            variant: "error",
+            autoHideDuration: 3000,
+          });
+
           throw error;
         }
       })
