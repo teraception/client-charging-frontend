@@ -20,7 +20,7 @@ import {
 } from "JS/React/Hooks/Clients/Hook";
 import { Client } from "JS/typingForNow/types";
 import { useSelectedClient } from "JS/React/Context/SelectedClientContext";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useRouting } from "JS/React/Hooks/Routes";
 
 interface ClientSelectorProps {
@@ -61,22 +61,43 @@ export const ClientSelector: React.FC<ClientSelectorProps> = ({
 
   // Initialize clients data and restore selected client from localStorage
   useEffect(() => {
+    // Extract clientId from URL if present
+    const location = window.location.pathname;
+    const urlClientIdMatch = location.match(/\/clients\/([^\/]+)/);
+    const urlClientId = urlClientIdMatch ? urlClientIdMatch[1] : null;
+
     if (isSuperAdmin && allClientsData) {
       setClients(allClientsData);
       setLoading(allClientsLoading);
 
-      // For super_admin, we don't auto-select the first client
-      // This allows them to see the clients listing page by default
+      // For super_admin, check if URL has client ID
+      if (urlClientId && allClientsData.length > 0) {
+        const clientFromUrl = allClientsData.find((c) => c.id === urlClientId);
+        if (clientFromUrl) {
+          setSelectedClient(clientFromUrl);
+        }
+      }
+      // Otherwise, we don't auto-select for super_admin (keep current behavior)
     } else if (isClient && userClientsData) {
       setClients(userClientsData);
       setLoading(userClientsLoading);
 
-      // If we have no selected client, try to restore from localStorage
+      // Only try to set selected client if we don't have one already
       if (!selectedClient && userClientsData.length > 0) {
-        const savedClientId = localStorage.getItem("selectedClientId");
+        // First priority: Check URL for client ID
+        if (urlClientId) {
+          const clientFromUrl = userClientsData.find(
+            (c) => c.id === urlClientId
+          );
+          if (clientFromUrl) {
+            setSelectedClient(clientFromUrl);
+            return;
+          }
+        }
 
+        // Second priority: Check localStorage
+        const savedClientId = localStorage.getItem("selectedClientId");
         if (savedClientId) {
-          // Try to find the saved client in the available clients
           const savedClient = userClientsData.find(
             (c) => c.id === savedClientId
           );
@@ -86,13 +107,15 @@ export const ClientSelector: React.FC<ClientSelectorProps> = ({
             if (window.location.pathname === routeProvider.react.dashboard()) {
               navigate(routeProvider.react.projects());
             }
-          } else {
-            // If saved client not found, select the first one
-            setSelectedClient(userClientsData[0]);
+            return;
           }
-        } else {
-          // No saved client, select the first one
-          setSelectedClient(userClientsData[0]);
+        }
+
+        // Last resort: Select first client
+        setSelectedClient(userClientsData[0]);
+        // If we're on the dashboard, navigate to projects with the first client
+        if (window.location.pathname === routeProvider.react.dashboard()) {
+          navigate(routeProvider.react.projects(userClientsData[0].id));
         }
       }
     }
