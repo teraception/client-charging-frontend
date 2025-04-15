@@ -39,6 +39,7 @@ export const ClientSelector: React.FC<ClientSelectorProps> = ({
   const navigate = useNavigate();
   const { routeBuilder, linkProvider } = useRouting();
   const routeProvider = routeBuilder();
+  const location = window.location.pathname;
 
   // For super admin - get all clients
   const {
@@ -62,7 +63,6 @@ export const ClientSelector: React.FC<ClientSelectorProps> = ({
   // Initialize clients data and restore selected client from localStorage
   useEffect(() => {
     // Extract clientId from URL if present
-    const location = window.location.pathname;
     const urlClientIdMatch = location.match(/\/clients\/([^\/]+)/);
     const urlClientId = urlClientIdMatch ? urlClientIdMatch[1] : null;
 
@@ -103,20 +103,12 @@ export const ClientSelector: React.FC<ClientSelectorProps> = ({
           );
           if (savedClient) {
             setSelectedClient(savedClient);
-            // If we're on the dashboard, navigate to projects
-            if (window.location.pathname === routeProvider.react.dashboard()) {
-              navigate(routeProvider.react.projects());
-            }
             return;
           }
         }
 
         // Last resort: Select first client
         setSelectedClient(userClientsData[0]);
-        // If we're on the dashboard, navigate to projects with the first client
-        if (window.location.pathname === routeProvider.react.dashboard()) {
-          navigate(routeProvider.react.projects(userClientsData[0].id));
-        }
       }
     }
   }, [
@@ -127,8 +119,78 @@ export const ClientSelector: React.FC<ClientSelectorProps> = ({
     allClientsLoading,
     userClientsLoading,
     selectedClient,
+    location,
+    setSelectedClient,
+  ]);
+
+  // Handle redirection for client users
+  useEffect(() => {
+    // Only proceed if data is loaded and user is client type
+    if (!isClient || userClientsLoading) return;
+
+    // If we're on the dashboard, redirect client users to projects
+    if (
+      location === routeProvider.react.dashboard() &&
+      userClientsData?.length > 0
+    ) {
+      // Keep showing loader during redirection
+      setLoading(true);
+
+      // Determine which client to use for redirection
+      const urlClientIdMatch = location.match(/\/clients\/([^\/]+)/);
+      const urlClientId = urlClientIdMatch ? urlClientIdMatch[1] : null;
+
+      // Try to find client ID in this order: URL > selectedClient > localStorage > first client
+      let targetClient: Client | null = null;
+
+      // 1. Check URL
+      if (urlClientId) {
+        targetClient =
+          userClientsData.find((c) => c.id === urlClientId) || null;
+      }
+
+      // 2. Check selectedClient
+      if (!targetClient && selectedClient) {
+        targetClient = selectedClient;
+      }
+
+      // 3. Check localStorage
+      if (!targetClient) {
+        const savedClientId = localStorage.getItem("selectedClientId");
+        if (savedClientId) {
+          targetClient =
+            userClientsData.find((c) => c.id === savedClientId) || null;
+        }
+      }
+
+      // 4. Use first client as fallback
+      if (!targetClient && userClientsData.length > 0) {
+        targetClient = userClientsData[0];
+      }
+
+      // Redirect with the determined client
+      if (targetClient) {
+        // Ensure the client is selected
+        if (!selectedClient || selectedClient.id !== targetClient.id) {
+          setSelectedClient(targetClient);
+        }
+
+        // Navigate to projects with this client
+        navigate(linkProvider.react.projects(targetClient.id));
+      }
+
+      // Only stop loading after redirection is handled
+      setLoading(false);
+    }
+  }, [
+    isClient,
+    userClientsData,
+    userClientsLoading,
+    location,
+    selectedClient,
     navigate,
     routeProvider,
+    linkProvider,
     setSelectedClient,
   ]);
 
