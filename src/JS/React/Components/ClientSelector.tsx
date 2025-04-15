@@ -9,6 +9,8 @@ import {
   Typography,
   CircularProgress,
   Tooltip,
+  Autocomplete,
+  TextField,
 } from "@mui/material";
 import { useAccessHandler } from "JS/React/Hooks/AccessHandler";
 import { useLoggedInUser } from "JS/Routing/Context/LoggedInUseContextProvider";
@@ -35,7 +37,7 @@ export const ClientSelector: React.FC<ClientSelectorProps> = ({
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
-  const { routeBuilder } = useRouting();
+  const { routeBuilder, linkProvider } = useRouting();
   const routeProvider = routeBuilder();
 
   // For super admin - get all clients
@@ -107,26 +109,12 @@ export const ClientSelector: React.FC<ClientSelectorProps> = ({
     setSelectedClient,
   ]);
 
-  const handleClientChange = (event: SelectChangeEvent<string>) => {
-    const selectedId = event.target.value;
-
-    // Handle the "All Clients" option for super_admin
-    if (selectedId === "all" && isSuperAdmin) {
-      setSelectedClient(null);
-      localStorage.removeItem("selectedClientId");
-      return;
-    }
-
-    const client = clients.find((c) => c.id === selectedId) || null;
+  const handleClientChange = (client: Client | null) => {
     setSelectedClient(client);
-
-    // If client user selecting a client, navigate to projects
-    if (
-      isClient &&
-      client &&
-      window.location.pathname === routeProvider.react.dashboard()
-    ) {
-      navigate(routeProvider.react.projects());
+    if (client) {
+      navigate(linkProvider.react.projects(client.id));
+    } else {
+      navigate(linkProvider.react.dashboard());
     }
   };
 
@@ -165,27 +153,16 @@ export const ClientSelector: React.FC<ClientSelectorProps> = ({
       <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: "normal" }}>
         <span>Select Client</span>
       </Typography>
-      <FormControl fullWidth size="small" variant="outlined">
-        <InputLabel id="client-selector-label">Client</InputLabel>
-        <Select
-          labelId="client-selector-label"
-          id="client-selector"
-          value={selectedClient?.id || (isSuperAdmin ? "all" : "")}
-          onChange={handleClientChange}
-          label="Client"
-        >
-          {isSuperAdmin && (
-            <MenuItem value="all">
-              <em>All Clients</em>
-            </MenuItem>
-          )}
-          {clients.map((client) => (
-            <MenuItem key={client.id} value={client.id}>
-              {client.name}
-            </MenuItem>
-          ))}
-        </Select>
-      </FormControl>
+      <Autocomplete
+        options={clients}
+        getOptionLabel={(option) => option.name}
+        value={selectedClient}
+        onChange={(_, newValue) => handleClientChange(newValue)}
+        disableClearable={isClient}
+        renderInput={(params) => (
+          <TextField {...params} label="Select Client" variant="outlined" />
+        )}
+      />
     </Box>
   );
 };

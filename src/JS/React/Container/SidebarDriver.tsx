@@ -209,10 +209,8 @@ const Component = (props: BackendSidebarProps) => {
       permission?: any;
     }>[] = [];
 
-    locationItems = [];
-
-    // Super admin menu items
-    if (isSuperAdmin) {
+    // Only show Users/Clients for super admin when no client is selected
+    if (isSuperAdmin && !selectedClient) {
       locationItems.push({
         identifier: "users",
         title: "Users",
@@ -222,23 +220,28 @@ const Component = (props: BackendSidebarProps) => {
         route: provider.react.users(),
         icon: <PeopleIcon className={classes.iconColor} />,
       });
-    }
-
-    // Client user menu items - only show if a client is selected
-    if (isClient && selectedClient) {
+      locationItems.push({
+        identifier: "clients",
+        title: "Clients",
+        hasChilds: false,
+        button: true,
+        skip: false,
+        route: provider.react.clients(),
+        icon: <PeopleIcon className={classes.iconColor} />,
+      });
     }
 
     let sideBarItems: SidebarItemProps[] = [...locationItems];
 
-    // Only add Projects menu item when a client is selected
-    if (selectedClient || isSuperAdmin) {
+    // Show client-specific items only when client is selected
+    if (selectedClient) {
       sideBarItems.push({
         identifier: "projects",
         title: "Projects",
         hasChilds: false,
         button: true,
         skip: false,
-        route: provider.react.projects(),
+        route: provider.react.projects(selectedClient.id),
         icon: <FolderIcon className={classes.iconColor} />,
       });
       sideBarItems.push({
@@ -247,7 +250,7 @@ const Component = (props: BackendSidebarProps) => {
         hasChilds: false,
         button: true,
         skip: false,
-        route: provider.react.paymentMethods(),
+        route: provider.react.paymentMethods(selectedClient.id),
         icon: <AddCardIcon className={classes.iconColor} />,
       });
       sideBarItems.push({
@@ -256,7 +259,7 @@ const Component = (props: BackendSidebarProps) => {
         hasChilds: false,
         button: true,
         skip: false,
-        route: provider.react.invoicesList(),
+        route: provider.react.invoicesList(selectedClient.id),
         icon: <ReceiptIcon className={classes.iconColor} />,
       });
     }

@@ -77,13 +77,23 @@ export const routesForContext = () => (params?: RouteParams) => {
       dashboard: () => authorizedContext.buildUrl(`/`),
       users: () => authorizedContext.buildUrl(`/users`),
       clients: () => authorizedContext.buildUrl(`/clients`),
-      invoicesList: () => authorizedContext.buildUrl(`/clients/invoices`),
+      invoicesList: (clientId?: string) =>
+        authorizedContext.buildUrl(
+          clientId ? `/clients/${clientId}/invoices` : "/clients/invoices"
+        ),
       clientsList: () => authorizedContext.buildUrl(`/clients/list`),
-      paymentMethods: () =>
-        authorizedContext.buildUrl(`/clients/payment-methods`),
+      paymentMethods: (clientId?: string) =>
+        authorizedContext.buildUrl(
+          clientId
+            ? `/clients/${clientId}/payment-methods`
+            : "/clients/payment-methods"
+        ),
       addPaymentMethod: (clientId: string) =>
         authorizedContext.buildUrl(`/clients/${clientId}/payment-methods/add`),
-      projects: () => authorizedContext.buildUrl(`/clients/projects`),
+      projects: (clientId?: string) =>
+        authorizedContext.buildUrl(
+          clientId ? `/clients/${clientId}/projects` : "/clients/projects"
+        ),
       projectDetails: (projectId: string) =>
         authorizedContext.buildUrl(`/clients/projects/${projectId}`),
 

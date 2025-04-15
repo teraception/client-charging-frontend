@@ -136,10 +136,13 @@ export const Layout = (props: LayoutProps) => {
   const commonRoutes = (
     <>
       <Route path={""} key={"dashboard"} element={<Dashboard />} />
-      <Route path={"clients/projects"} element={<ProjectsComponent />} />
-      <Route path={"clients/invoices"} element={<Invoices />} />
       <Route
-        path={"clients/payment-methods"}
+        path={"clients/:clientId/projects"}
+        element={<ProjectsComponent />}
+      />
+      <Route path={"clients/:clientId/invoices"} element={<Invoices />} />
+      <Route
+        path={"clients/:clientId/payment-methods"}
         key={"paymentMethods"}
         element={<PaymentMethodComponent />}
       />
@@ -148,11 +151,9 @@ export const Layout = (props: LayoutProps) => {
 
   const superAdminRoutes = (
     <Routes>
+      <Route path={"users"} element={<UserComponent />} />
+      <Route path={"clients"} element={<ClientComponent />} />
       {commonRoutes}
-      <Route path={"users"}>
-        <Route index element={<UserComponent />} />
-      </Route>
-      <Route path={"clients"} key={"clients"} element={<ClientComponent />} />
     </Routes>
   );
 
@@ -232,7 +233,7 @@ export const Layout = (props: LayoutProps) => {
             })}
           >
             {isSuperAdmin && !selectedClient ? (
-              <ClientComponent />
+              superAdminRoutes
             ) : selectedClient ? (
               isSuperAdmin ? (
                 superAdminRoutes
