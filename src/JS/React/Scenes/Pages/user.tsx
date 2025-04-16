@@ -202,13 +202,15 @@ export const UserComponent = (props: UserComponentProps) => {
           dialogMessage="Are you sure you want to delete"
         >
           {(props) => (
-            <IconButton
-              onClick={() => {
-                props.askConfirmation();
-              }}
-            >
-              <DeleteIcon color="action" />
-            </IconButton>
+            <Tooltip title="Delete user">
+              <IconButton
+                onClick={() => {
+                  props.askConfirmation();
+                }}
+              >
+                <DeleteIcon color="action" />
+              </IconButton>
+            </Tooltip>
           )}
         </RenderWithConfirmation>
       </Box>

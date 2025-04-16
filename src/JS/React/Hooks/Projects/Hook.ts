@@ -192,7 +192,8 @@ export const useUpdatePaymentMethodsForProject = () => {
     onSuccess: (response) => {
       // Invalidate project details
       queryClient.invalidateQueries({
-        queryKey: project.details(response?.data?.id),
+        // queryKey: project.details(response?.data?.id),
+        queryKey: project.all,
       });
     },
   });

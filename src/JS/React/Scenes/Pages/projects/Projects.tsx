@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useCallback, useEffect } from "react";
 import {
   Typography,
   Button,
@@ -11,6 +11,7 @@ import {
   Divider,
   IconButton,
   CircularProgress,
+  Tooltip,
 } from "@mui/material";
 import { useSelectedClient } from "JS/React/Context/SelectedClientContext";
 import AddIcon from "@mui/icons-material/Add";
@@ -26,6 +27,7 @@ import {
   useGetProjectsByClient,
   useUpdateProject,
   useUpdatePaymentMethodsForProject,
+  useGetProjectDetails,
 } from "JS/React/Hooks/Projects/Hook";
 import { useCreateInvoice } from "JS/React/Hooks/Invoices/Hook";
 import { useGetStripePaymentMethodsByClientId } from "JS/React/Hooks/PaymentMethods/Hook";
@@ -48,7 +50,6 @@ export const ProjectsComponent = () => {
   const [openDeleteConfirmation, setOpenDeleteConfirmation] = useState(false);
   const [newProjectName, setNewProjectName] = useState("");
   const [editingProject, setEditingProject] = useState<Project | null>(null);
-  const [menuAnchorEl, setMenuAnchorEl] = useState<null | HTMLElement>(null);
   const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
 
   // Payment methods dialog state
@@ -77,8 +78,14 @@ export const ProjectsComponent = () => {
   const routeProvider = routeBuilder();
 
   // Get projects for the selected client
-  const { projectsData, projectsIsLoading, refetchProjects } =
-    useGetProjectsByClient(selectedClient?.id || null);
+  const { projectsData, projectsIsLoading } = useGetProjectsByClient(
+    selectedClient?.id || null
+  );
+
+  // Get specific project details for the payment methods dialog
+  const { projectData, projectIsLoading } = useGetProjectDetails(
+    paymentMethodProjectId
+  );
 
   // Get Stripe payment methods for the selected client
   const { stripePaymentMethods, stripePaymentMethodsIsLoading } =
@@ -100,20 +107,21 @@ export const ProjectsComponent = () => {
   // Create invoice mutation
   const { createInvoice, createInvoiceIsLoading } = useCreateInvoice();
 
-  // Handle menu open
-  const handleMenuOpen = (
-    event: React.MouseEvent<HTMLElement>,
-    projectId: string
-  ) => {
-    setMenuAnchorEl(event.currentTarget);
-    setActiveProjectId(projectId);
-  };
+  // Use project data from detailed query for payment methods dialog
+  useEffect(() => {
+    if (projectData && openPaymentMethodsDialog) {
+      setPaymentMethodProjectName(projectData.name);
+      setSelectedPaymentMethodIds(projectData.paymentMethodIds || []);
+    }
+  }, [projectData, openPaymentMethodsDialog]);
 
-  // Handle menu close
-  const handleMenuClose = () => {
-    setMenuAnchorEl(null);
-    setActiveProjectId(null);
-  };
+  // Reset payment method dialog state
+  const resetPaymentMethodDialogState = useCallback(() => {
+    setSelectedPaymentMethodIds([]);
+    setPaymentMethodProjectName("");
+    setPaymentMethodProjectId(null);
+    setOpenPaymentMethodsDialog(false);
+  }, []);
 
   // Handle create project
   const handleCreateProject = async () => {
@@ -128,21 +136,23 @@ export const ProjectsComponent = () => {
 
       setNewProjectName("");
       setOpenNewProjectDialog(false);
-      refetchProjects();
     } catch (error) {
       console.error("Error creating project:", error);
     }
   };
 
   // Handle edit project
-  const handleEditProject = (projectId: string) => {
-    const project = projectsData.find((p) => p.id === projectId);
+  const handleEditProject = useCallback(
+    (projectId: string) => {
+      const project = projectsData.find((p) => p.id === projectId);
 
-    if (project) {
-      setEditingProject(project);
-      setOpenEditProjectDialog(true);
-    }
-  };
+      if (project) {
+        setEditingProject(project);
+        setOpenEditProjectDialog(true);
+      }
+    },
+    [projectsData]
+  );
 
   // Handle update project
   const handleUpdateProject = async () => {
@@ -156,7 +166,6 @@ export const ProjectsComponent = () => {
 
       setEditingProject(null);
       setOpenEditProjectDialog(false);
-      refetchProjects();
     } catch (error) {
       console.error("Error updating project:", error);
     }
@@ -173,20 +182,19 @@ export const ProjectsComponent = () => {
       });
 
       setOpenDeleteConfirmation(false);
-      refetchProjects();
     } catch (error) {
       console.error("Error deleting project:", error);
     }
   };
 
   // Handle open create invoice dialog
-  const handleOpenCreateInvoiceDialog = (projectId: string) => {
+  const handleOpenCreateInvoiceDialog = useCallback((projectId: string) => {
     setInvoiceProjectId(projectId);
     setInvoiceAmount("");
     setInvoiceDate(new Date(new Date().setDate(new Date().getDate() + 1)));
     setAmountError("");
     setOpenCreateInvoiceDialog(true);
-  };
+  }, []);
 
   // Handle amount change with validation
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -254,13 +262,11 @@ export const ProjectsComponent = () => {
   };
 
   // Handle open payment methods dialog
-  const handleOpenPaymentMethodsDialog = (projectId: string) => {
-    const project = projectsData.find((p) => p.id === projectId);
+  const handleOpenPaymentMethodsDialog = useCallback((projectId: string) => {
+    // Set just the ID first, then let the useEffect handle getting the data
     setPaymentMethodProjectId(projectId);
-    setPaymentMethodProjectName(project?.name || "");
-    setSelectedPaymentMethodIds(project?.paymentMethodIds || []);
     setOpenPaymentMethodsDialog(true);
-  };
+  }, []);
 
   // Handle update payment methods
   const handleUpdatePaymentMethods = async () => {
@@ -272,8 +278,7 @@ export const ProjectsComponent = () => {
         paymentMethodIds: selectedPaymentMethodIds,
       });
 
-      setOpenPaymentMethodsDialog(false);
-      refetchProjects();
+      resetPaymentMethodDialogState();
     } catch (error) {
       console.error("Error updating payment methods:", error);
     }
@@ -323,23 +328,27 @@ export const ProjectsComponent = () => {
             )}
             {isSuperAdmin && (
               <>
-                <IconButton
-                  size="small"
-                  onClick={() => handleEditProject(row.original.id!)}
-                  color="primary"
-                >
-                  <EditIcon fontSize="small" />
-                </IconButton>
-                <IconButton
-                  size="small"
-                  onClick={() => {
-                    setActiveProjectId(row.original.id!);
-                    setOpenDeleteConfirmation(true);
-                  }}
-                  color="error"
-                >
-                  <DeleteIcon fontSize="small" />
-                </IconButton>
+                <Tooltip title="Edit project">
+                  <IconButton
+                    size="small"
+                    onClick={() => handleEditProject(row.original.id!)}
+                    color="primary"
+                  >
+                    <EditIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+                <Tooltip title="Delete project">
+                  <IconButton
+                    size="small"
+                    onClick={() => {
+                      setActiveProjectId(row.original.id!);
+                      setOpenDeleteConfirmation(true);
+                    }}
+                    color="error"
+                  >
+                    <DeleteIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
                 <Button
                   variant="outlined"
                   size="small"
@@ -358,7 +367,13 @@ export const ProjectsComponent = () => {
         size: 350,
       },
     ],
-    [isClient, isSuperAdmin]
+    [
+      isClient,
+      isSuperAdmin,
+      handleEditProject,
+      handleOpenCreateInvoiceDialog,
+      handleOpenPaymentMethodsDialog,
+    ]
   );
 
   // Initialize table
@@ -584,7 +599,7 @@ export const ProjectsComponent = () => {
       {/* Payment Methods Selection Dialog */}
       <Dialog
         open={openPaymentMethodsDialog}
-        onClose={() => setOpenPaymentMethodsDialog(false)}
+        onClose={resetPaymentMethodDialogState}
         PaperProps={{
           sx: {
             maxHeight: "500px",
@@ -597,10 +612,10 @@ export const ProjectsComponent = () => {
         }}
       >
         <DialogTitle>
-          Update Payment Methods for {paymentMethodProjectName}
+          Update Payment Methods for {paymentMethodProjectName || "Project"}
         </DialogTitle>
         <DialogContent sx={{ overflow: "visible", position: "relative" }}>
-          {stripePaymentMethodsIsLoading ? (
+          {stripePaymentMethodsIsLoading || projectIsLoading ? (
             <Box sx={{ display: "flex", justifyContent: "center", p: 4 }}>
               <CircularProgress />
             </Box>
@@ -610,6 +625,49 @@ export const ProjectsComponent = () => {
             </Typography>
           ) : (
             <Box sx={{ position: "relative", zIndex: 1300 }}>
+              {/* Display currently selected payment methods */}
+              {selectedPaymentMethodIds.length > 0 && (
+                <Box
+                  sx={{
+                    mb: 2,
+                    p: 2,
+                    bgcolor: "#f0f7ff",
+                    borderRadius: 1,
+                    border: "1px solid #b3d1ff",
+                  }}
+                >
+                  <Typography
+                    variant="subtitle2"
+                    sx={{ mb: 1, color: "#0047b3" }}
+                  >
+                    Currently Selected Payment Methods:
+                  </Typography>
+                  <Box
+                    sx={{ display: "flex", flexDirection: "column", gap: 1 }}
+                  >
+                    {selectedPaymentMethodIds.map((id) => {
+                      const method = stripePaymentMethods.find(
+                        (m) => m.id === id
+                      );
+                      return method ? (
+                        <Typography key={id} variant="body2">
+                          • {method.card?.brand?.toUpperCase() || "CARD"} ****{" "}
+                          {method.card?.last4 || "****"}
+                        </Typography>
+                      ) : (
+                        <Typography
+                          key={id}
+                          variant="body2"
+                          color="text.secondary"
+                        >
+                          • Unknown payment method ({id})
+                        </Typography>
+                      );
+                    })}
+                  </Box>
+                </Box>
+              )}
+
               <SelectComponent
                 title="Payment Methods"
                 placeholder="Select payment methods"
@@ -620,22 +678,25 @@ export const ProjectsComponent = () => {
                   }`,
                 }))}
                 selectedValues={selectedPaymentMethodIds}
-                onChange={setSelectedPaymentMethodIds}
+                onChange={(values) => {
+                  console.log("New selected values:", values);
+                  setSelectedPaymentMethodIds(values);
+                }}
                 isMulti={true}
               />
             </Box>
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setOpenPaymentMethodsDialog(false)}>
-            Cancel
-          </Button>
+          <Button onClick={resetPaymentMethodDialogState}>Cancel</Button>
           <Button
             onClick={handleUpdatePaymentMethods}
             variant="contained"
             color="primary"
             disabled={
-              updatePaymentMethodsIsLoading || stripePaymentMethods.length === 0
+              updatePaymentMethodsIsLoading ||
+              stripePaymentMethods.length === 0 ||
+              projectIsLoading
             }
           >
             {updatePaymentMethodsIsLoading ? (

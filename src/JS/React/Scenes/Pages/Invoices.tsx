@@ -12,6 +12,7 @@ import {
   CircularProgress,
   Divider,
   Chip,
+  Tooltip,
 } from "@mui/material";
 import { useSelectedClient } from "JS/React/Context/SelectedClientContext";
 import { useAccessHandler } from "JS/React/Hooks/AccessHandler";
@@ -139,18 +140,20 @@ const Invoices = () => {
               header: "Actions",
               Cell: ({ row }) =>
                 row.original.status_transitions.finalized_at == null && (
-                  <IconButton
-                    onClick={() =>
-                      handleDeleteClick(
-                        row.original.id,
-                        row.original.dbInvoiceObject.id
-                      )
-                    }
-                    size="small"
-                    color="error"
-                  >
-                    <DeleteIcon fontSize="small" />
-                  </IconButton>
+                  <Tooltip title="Delete invoice">
+                    <IconButton
+                      onClick={() =>
+                        handleDeleteClick(
+                          row.original.id,
+                          row.original.dbInvoiceObject.id
+                        )
+                      }
+                      size="small"
+                      color="error"
+                    >
+                      <DeleteIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
                 ),
               align: "right",
               size: 100,

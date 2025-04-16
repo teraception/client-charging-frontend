@@ -9,7 +9,7 @@ import { useRouting } from "../Hooks/Routes";
 import { useParams } from "react-router";
 import { useCreatePaymentMethod } from "../Hooks/Payment-methods/Hook";
 
-const returnUrl = import.meta.env.VITE_STRIPE_RETURN_URL;
+const dashboardUrl = import.meta.env.VITE_DASHBOARD_URL;
 
 export const PaymentSetupForm = () => {
   const stripe = useStripe();
@@ -64,7 +64,7 @@ export const PaymentSetupForm = () => {
       elements: elements as StripeElements,
       clientSecret: res.data.clientSecret,
       confirmParams: {
-        return_url: returnUrl,
+        return_url: `${dashboardUrl}/clients/${routeClientId}/payment-methods`,
       },
     });
 
@@ -97,7 +97,7 @@ export const PaymentSetupForm = () => {
         style={{
           fontSize: "1.5rem",
           marginBottom: "1.5rem",
-          color: "#333",
+          color: "#4D4F5C",
           textAlign: "center",
           fontWeight: "600",
         }}
@@ -116,8 +116,8 @@ export const PaymentSetupForm = () => {
           padding: "0.75rem 1rem",
           backgroundColor:
             !stripe || loading || createPaymentMethodLoader
-              ? "#94a3b8"
-              : "#4f46e5",
+              ? "#949494"
+              : "#00A8A3",
           color: "white",
           border: "none",
           borderRadius: "6px",
@@ -137,10 +137,10 @@ export const PaymentSetupForm = () => {
       {errorMessage && (
         <div
           style={{
-            color: "#ef4444",
+            color: "#f65c5c",
             marginTop: "1rem",
             padding: "0.75rem",
-            backgroundColor: "#fee2e2",
+            backgroundColor: "#dff9ed",
             borderRadius: "4px",
             fontSize: "0.875rem",
           }}

@@ -5,6 +5,7 @@ import {
   IconButton,
   Theme,
   Typography,
+  Tooltip,
 } from "@mui/material";
 import { css } from "@emotion/react";
 import { StyleClassKey, makeStyles } from "JS/React/Style/styleHelper";
@@ -177,20 +178,26 @@ export const ClientComponent = (props: ClientComponentProps) => {
     positionActionsColumn: "last",
     renderRowActions: ({ row }) => (
       <Box>
-        <IconButton onClick={() => handleEditClient(row.original as Client)}>
-          <EditIcon color="action" />
-        </IconButton>
-        <IconButton onClick={() => handleManageUsers(row.original as Client)}>
-          <PeopleIcon color="action" />
-        </IconButton>
-        <IconButton
-          onClick={() => {
-            setSelectedClient(row.original as Client);
-            setShowInviteDialog(true);
-          }}
-        >
-          <PersonAddIcon color="action" />
-        </IconButton>
+        <Tooltip title="Edit client">
+          <IconButton onClick={() => handleEditClient(row.original as Client)}>
+            <EditIcon color="action" />
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="Manage users">
+          <IconButton onClick={() => handleManageUsers(row.original as Client)}>
+            <PeopleIcon color="action" />
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="Invite user">
+          <IconButton
+            onClick={() => {
+              setSelectedClient(row.original as Client);
+              setShowInviteDialog(true);
+            }}
+          >
+            <PersonAddIcon color="action" />
+          </IconButton>
+        </Tooltip>
         <RenderWithConfirmation
           onConfirm={async () => {
             const response = await deleteClient(row.original.id);
@@ -204,13 +211,15 @@ export const ClientComponent = (props: ClientComponentProps) => {
           dialogMessage="Are you sure you want to delete this client?"
         >
           {(props) => (
-            <IconButton
-              onClick={() => {
-                props.askConfirmation();
-              }}
-            >
-              <DeleteIcon color="action" />
-            </IconButton>
+            <Tooltip title="Delete client">
+              <IconButton
+                onClick={() => {
+                  props.askConfirmation();
+                }}
+              >
+                <DeleteIcon color="action" />
+              </IconButton>
+            </Tooltip>
           )}
         </RenderWithConfirmation>
       </Box>
