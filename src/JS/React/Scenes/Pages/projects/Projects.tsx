@@ -654,7 +654,7 @@ export const ProjectsComponent = () => {
                     variant="subtitle2"
                     sx={{ mb: 1, color: "#0047b3" }}
                   >
-                    Currently Selected Payment Methods:
+                    Currently Selected Payment Method:
                   </Typography>
                   <Box
                     sx={{ display: "flex", flexDirection: "column", gap: 1 }}
@@ -665,7 +665,7 @@ export const ProjectsComponent = () => {
                       );
                       return method ? (
                         <Typography key={id} variant="body2">
-                          • {method.card?.brand?.toUpperCase() || "CARD"} ****{" "}
+                          {method.card?.brand?.toUpperCase() || "CARD"} ****{" "}
                           {method.card?.last4 || "****"}
                         </Typography>
                       ) : (
@@ -674,7 +674,7 @@ export const ProjectsComponent = () => {
                           variant="body2"
                           color="text.secondary"
                         >
-                          • Unknown payment method ({id})
+                          Unknown payment method ({id})
                         </Typography>
                       );
                     })}
@@ -694,9 +694,15 @@ export const ProjectsComponent = () => {
                 selectedValues={selectedPaymentMethodIds}
                 onChange={(values) => {
                   console.log("New selected values:", values);
-                  setSelectedPaymentMethodIds(values);
+                  // If single value returned (not array), wrap in array
+                  const newValues = Array.isArray(values)
+                    ? values
+                    : values?.value
+                    ? [values.value]
+                    : [];
+                  setSelectedPaymentMethodIds(newValues);
                 }}
-                isMulti={true}
+                isMulti={false}
               />
             </Box>
           )}
