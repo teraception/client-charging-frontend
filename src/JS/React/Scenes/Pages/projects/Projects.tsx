@@ -1,24 +1,7 @@
-import React, { useState, useMemo, useCallback, useEffect } from "react";
-import {
-  Typography,
-  Button,
-  Box,
-  TextField,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Divider,
-  IconButton,
-  CircularProgress,
-  Tooltip,
-  MenuItem,
-  Grid,
-} from "@mui/material";
+import React, { useState, useCallback, useEffect } from "react";
+import { Typography, Button, Box, Divider } from "@mui/material";
 import { useSelectedClient } from "JS/React/Context/SelectedClientContext";
 import AddIcon from "@mui/icons-material/Add";
-import EditIcon from "@mui/icons-material/Edit";
-import DeleteIcon from "@mui/icons-material/Delete";
 import { Project } from "JS/typingForNow/types";
 import { useNavigate } from "react-router";
 import { useRouting } from "JS/React/Hooks/Routes";
@@ -33,23 +16,20 @@ import {
 } from "JS/React/Hooks/Projects/Hook";
 import { useCreateInvoice } from "JS/React/Hooks/Invoices/Hook";
 import { useGetStripePaymentMethodsByClientId } from "JS/React/Hooks/PaymentMethods/Hook";
-import { SelectComponent } from "JS/React/Components/SelectComponent";
-import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
-import {
-  LocalizationProvider,
-  DatePicker,
-  TimePicker,
-} from "@mui/x-date-pickers";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
 import numeral from "numeral";
+
+// Import the partial components
 import {
-  MaterialReactTable,
-  useMaterialReactTable,
-  MRT_ColumnDef,
-} from "material-react-table";
-import { appTimezones } from "JS/types/constants";
+  NewProjectDialog,
+  EditProjectDialog,
+  DeleteProjectDialog,
+  PaymentMethodsDialog,
+  CreateInvoiceDialog,
+  ProjectsTable,
+} from "./partials";
 
 // Initialize dayjs plugins
 dayjs.extend(utc);
@@ -58,82 +38,147 @@ dayjs.extend(timezone);
 export const ProjectsComponent = () => {
   const { selectedClient } = useSelectedClient();
   const { isSuperAdmin, isClient } = useAccessHandler();
+  const navigate = useNavigate();
+  const { routeBuilder } = useRouting();
+  const routeProvider = routeBuilder();
+
+  // State for dialog management
   const [openNewProjectDialog, setOpenNewProjectDialog] = useState(false);
   const [openEditProjectDialog, setOpenEditProjectDialog] = useState(false);
   const [openDeleteConfirmation, setOpenDeleteConfirmation] = useState(false);
-  const [newProjectName, setNewProjectName] = useState("");
-  const [editingProject, setEditingProject] = useState<Project | null>(null);
-  const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
-
-  // Payment methods dialog state
   const [openPaymentMethodsDialog, setOpenPaymentMethodsDialog] =
     useState(false);
-  const [selectedPaymentMethodIds, setSelectedPaymentMethodIds] = useState<
-    string[]
-  >([]);
+  const [openCreateInvoiceDialog, setOpenCreateInvoiceDialog] = useState(false);
+
+  // Project state
+  const [newProjectName, setNewProjectName] = useState("");
+  const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
   const [paymentMethodProjectId, setPaymentMethodProjectId] = useState<
     string | null
   >(null);
   const [paymentMethodProjectName, setPaymentMethodProjectName] =
     useState<string>("");
-
-  // Invoice creation state
-  const [openCreateInvoiceDialog, setOpenCreateInvoiceDialog] = useState(false);
-  const [invoiceAmount, setInvoiceAmount] = useState("");
-  const [invoiceDescription, setInvoiceDescription] = useState("");
-  const [invoiceDate, setInvoiceDate] = useState<Date | null>(
-    new Date(new Date().setDate(new Date().getDate() + 1))
-  );
-  const [invoiceTime, setInvoiceTime] = useState<Date | null>(new Date());
-  const [invoiceTimezone, setInvoiceTimezone] = useState(dayjs.tz.guess());
   const [invoiceProjectId, setInvoiceProjectId] = useState<string | null>(null);
-  const [amountError, setAmountError] = useState("");
 
-  const navigate = useNavigate();
-  const { routeBuilder } = useRouting();
-  const routeProvider = routeBuilder();
+  // Dialog state objects
+  const [editProjectState, setEditProjectState] = useState({
+    editingProject: null as Project | null,
+    isLoading: false,
+  });
 
-  // Get projects for the selected client
+  const [deleteProjectState, setDeleteProjectState] = useState({
+    isLoading: false,
+  });
+
+  const [paymentMethodsState, setPaymentMethodsState] = useState({
+    selectedPaymentMethodIds: [] as string[],
+    isLoading: false,
+    paymentMethodsLoading: false,
+  });
+
+  const [createInvoiceState, setCreateInvoiceState] = useState({
+    invoiceAmount: "",
+    invoiceDescription: "",
+    invoiceDate: new Date(new Date().setDate(new Date().getDate() + 1)),
+    invoiceTime: new Date(),
+    invoiceTimezone: dayjs.tz.guess(),
+    amountError: "",
+    isLoading: false,
+  });
+
+  // API hooks
   const { projectsData, projectsIsLoading } = useGetProjectsByClient(
     selectedClient?.id || null
   );
 
-  // Get specific project details for the payment methods dialog
   const { projectData, projectIsLoading } = useGetProjectDetails(
     paymentMethodProjectId
   );
 
-  // Get Stripe payment methods for the selected client
   const { stripePaymentMethods, stripePaymentMethodsIsLoading } =
     useGetStripePaymentMethodsByClientId(selectedClient?.id || null);
 
-  // Create project mutation
   const { createProject, createProjectIsLoading } = useCreateProject();
-
-  // Update project mutation
   const { updateProject, updateProjectIsLoading } = useUpdateProject();
-
-  // Delete project mutation
   const { deleteProject, deleteProjectIsLoading } = useDeleteProject();
-
-  // Update payment methods mutation
   const { updatePaymentMethodsForProject, updatePaymentMethodsIsLoading } =
     useUpdatePaymentMethodsForProject();
-
-  // Create invoice mutation
   const { createInvoice, createInvoiceIsLoading } = useCreateInvoice();
 
-  // Use project data from detailed query for payment methods dialog
+  // Update loading states from API hooks
+  useEffect(() => {
+    setEditProjectState((prev) => ({
+      ...prev,
+      isLoading: updateProjectIsLoading,
+    }));
+    setDeleteProjectState((prev) => ({
+      ...prev,
+      isLoading: deleteProjectIsLoading,
+    }));
+    setPaymentMethodsState((prev) => ({
+      ...prev,
+      isLoading: updatePaymentMethodsIsLoading,
+      paymentMethodsLoading: stripePaymentMethodsIsLoading || projectIsLoading,
+    }));
+    setCreateInvoiceState((prev) => ({
+      ...prev,
+      isLoading: createInvoiceIsLoading,
+    }));
+  }, [
+    updateProjectIsLoading,
+    deleteProjectIsLoading,
+    updatePaymentMethodsIsLoading,
+    stripePaymentMethodsIsLoading,
+    projectIsLoading,
+    createInvoiceIsLoading,
+  ]);
+
+  // Use project data for payment methods dialog
   useEffect(() => {
     if (projectData && openPaymentMethodsDialog) {
       setPaymentMethodProjectName(projectData.name);
-      setSelectedPaymentMethodIds(projectData.paymentMethodIds || []);
+      setPaymentMethodsState((prev) => ({
+        ...prev,
+        selectedPaymentMethodIds: projectData.paymentMethodIds || [],
+      }));
     }
   }, [projectData, openPaymentMethodsDialog]);
 
+  // Handle onChange for dialog states
+  const handleEditProjectChange = (
+    field: keyof typeof editProjectState,
+    value: any
+  ) => {
+    setEditProjectState((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleDeleteProjectChange = (
+    field: keyof typeof deleteProjectState,
+    value: any
+  ) => {
+    setDeleteProjectState((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handlePaymentMethodsChange = (
+    field: keyof typeof paymentMethodsState,
+    value: any
+  ) => {
+    setPaymentMethodsState((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleCreateInvoiceChange = (
+    field: keyof typeof createInvoiceState,
+    value: any
+  ) => {
+    setCreateInvoiceState((prev) => ({ ...prev, [field]: value }));
+  };
+
   // Reset payment method dialog state
   const resetPaymentMethodDialogState = useCallback(() => {
-    setSelectedPaymentMethodIds([]);
+    setPaymentMethodsState((prev) => ({
+      ...prev,
+      selectedPaymentMethodIds: [],
+    }));
     setPaymentMethodProjectName("");
     setPaymentMethodProjectId(null);
     setOpenPaymentMethodsDialog(false);
@@ -163,7 +208,7 @@ export const ProjectsComponent = () => {
       const project = projectsData.find((p) => p.id === projectId);
 
       if (project) {
-        setEditingProject(project);
+        setEditProjectState((prev) => ({ ...prev, editingProject: project }));
         setOpenEditProjectDialog(true);
       }
     },
@@ -172,6 +217,7 @@ export const ProjectsComponent = () => {
 
   // Handle update project
   const handleUpdateProject = async () => {
+    const { editingProject } = editProjectState;
     if (!editingProject || !editingProject.name.trim()) return;
 
     try {
@@ -180,7 +226,7 @@ export const ProjectsComponent = () => {
         data: { name: editingProject.name },
       });
 
-      setEditingProject(null);
+      setEditProjectState((prev) => ({ ...prev, editingProject: null }));
       setOpenEditProjectDialog(false);
     } catch (error) {
       console.error("Error updating project:", error);
@@ -206,45 +252,19 @@ export const ProjectsComponent = () => {
   // Handle open create invoice dialog
   const handleOpenCreateInvoiceDialog = useCallback((projectId: string) => {
     setInvoiceProjectId(projectId);
-    setInvoiceAmount("");
-    setInvoiceDescription("");
-    setInvoiceDate(new Date(new Date().setDate(new Date().getDate() + 1)));
-    setInvoiceTime(new Date());
-    setInvoiceTimezone(dayjs.tz.guess());
-    setAmountError("");
+    setCreateInvoiceState({
+      invoiceAmount: "",
+      invoiceDescription: "",
+      invoiceDate: new Date(new Date().setDate(new Date().getDate() + 1)),
+      invoiceTime: new Date(),
+      invoiceTimezone: dayjs.tz.guess(),
+      amountError: "",
+      isLoading: false,
+    });
     setOpenCreateInvoiceDialog(true);
   }, []);
 
-  // Handle amount change with validation
-  const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-
-    // Remove all non-numeric characters except the decimal point
-    const rawValue = value.replace(/[^0-9.]/g, "");
-
-    // Only allow one decimal point
-    const parts = rawValue.split(".");
-    const sanitizedValue = parts[0] + (parts.length > 1 ? "." + parts[1] : "");
-
-    // Limit to 2 decimal places
-    const decimalParts = sanitizedValue.split(".");
-    let finalValue = decimalParts[0];
-    if (decimalParts.length > 1) {
-      finalValue += "." + decimalParts[1].substring(0, 2);
-    }
-
-    // Update the state with the raw value
-    setInvoiceAmount(finalValue);
-
-    // Validate the amount
-    if (finalValue && parseFloat(finalValue) <= 0) {
-      setAmountError("Amount must be greater than 0");
-    } else {
-      setAmountError("");
-    }
-  };
-
-  // Format currency for display elsewhere in the UI
+  // Format currency for display
   const formatCurrency = (amount: string | number) => {
     if (!amount) return "$0.00";
     return "$" + numeral(amount).format("0,0.00");
@@ -252,6 +272,15 @@ export const ProjectsComponent = () => {
 
   // Handle create invoice
   const handleCreateInvoice = async () => {
+    const {
+      invoiceAmount,
+      amountError,
+      invoiceDate,
+      invoiceTime,
+      invoiceTimezone,
+      invoiceDescription,
+    } = createInvoiceState;
+
     if (
       !selectedClient ||
       !invoiceProjectId ||
@@ -264,17 +293,12 @@ export const ProjectsComponent = () => {
     }
 
     try {
-      // Combine date, time and timezone to create Unix timestamp
       const dateObj = dayjs(invoiceDate);
       const timeObj = dayjs(invoiceTime);
-
-      // Create a combined date+time in the specified timezone
       const combinedDateTime = dayjs.tz(
         `${dateObj.format("YYYY-MM-DD")}T${timeObj.format("HH:mm:00")}`,
         invoiceTimezone
       );
-
-      // Convert to unix timestamp (seconds)
       const chargeDate = combinedDateTime.unix();
 
       await createInvoice({
@@ -286,7 +310,6 @@ export const ProjectsComponent = () => {
       });
 
       setOpenCreateInvoiceDialog(false);
-      // Could navigate to invoices page or show success message
     } catch (error) {
       console.error("Error creating invoice:", error);
     }
@@ -294,7 +317,6 @@ export const ProjectsComponent = () => {
 
   // Handle open payment methods dialog
   const handleOpenPaymentMethodsDialog = useCallback((projectId: string) => {
-    // Set just the ID first, then let the useEffect handle getting the data
     setPaymentMethodProjectId(projectId);
     setOpenPaymentMethodsDialog(true);
   }, []);
@@ -306,7 +328,7 @@ export const ProjectsComponent = () => {
     try {
       await updatePaymentMethodsForProject({
         projectId: paymentMethodProjectId,
-        paymentMethodIds: selectedPaymentMethodIds,
+        paymentMethodIds: paymentMethodsState.selectedPaymentMethodIds,
       });
 
       resetPaymentMethodDialogState();
@@ -315,122 +337,11 @@ export const ProjectsComponent = () => {
     }
   };
 
-  // Define table columns
-  const columns = useMemo<MRT_ColumnDef<Project>[]>(
-    () => [
-      {
-        accessorKey: "name",
-        header: "Project Name",
-        size: 180,
-      },
-      {
-        accessorKey: "createdAt",
-        header: "Created Date",
-        Cell: ({ row }) => (
-          <span>{new Date(row.original.createdAt).toLocaleDateString()}</span>
-        ),
-        size: 150,
-      },
-      {
-        accessorKey: "paymentMethodIds",
-        header: "Payment Methods",
-        Cell: ({ row }) => (
-          <span>{row.original.paymentMethodIds?.length || 0}</span>
-        ),
-        size: 150,
-      },
-      {
-        id: "actions",
-        header: "Actions",
-        Cell: ({ row }) => (
-          <Box sx={{ display: "flex", gap: "8px" }}>
-            {isClient && (
-              <>
-                <Button
-                  variant="outlined"
-                  size="small"
-                  onClick={() =>
-                    handleOpenPaymentMethodsDialog(row.original.id!)
-                  }
-                >
-                  Update Payment Methods
-                </Button>
-              </>
-            )}
-            {isSuperAdmin && (
-              <>
-                <Tooltip title="Edit project">
-                  <IconButton
-                    size="small"
-                    onClick={() => handleEditProject(row.original.id!)}
-                    color="primary"
-                  >
-                    <EditIcon fontSize="small" />
-                  </IconButton>
-                </Tooltip>
-                <Tooltip title="Delete project">
-                  <IconButton
-                    size="small"
-                    onClick={() => {
-                      setActiveProjectId(row.original.id!);
-                      setOpenDeleteConfirmation(true);
-                    }}
-                    color="error"
-                  >
-                    <DeleteIcon fontSize="small" />
-                  </IconButton>
-                </Tooltip>
-                <Button
-                  variant="outlined"
-                  size="small"
-                  disabled={row.original.paymentMethodIds?.length === 0}
-                  color="success"
-                  onClick={() =>
-                    handleOpenCreateInvoiceDialog(row.original.id!)
-                  }
-                >
-                  Create Invoice
-                </Button>
-              </>
-            )}
-          </Box>
-        ),
-        size: 350,
-      },
-    ],
-    [
-      isClient,
-      isSuperAdmin,
-      handleEditProject,
-      handleOpenCreateInvoiceDialog,
-      handleOpenPaymentMethodsDialog,
-    ]
-  );
-
-  // Initialize table
-  const table = useMaterialReactTable({
-    columns,
-    data: projectsData || [],
-    enableFullScreenToggle: false,
-    enableColumnOrdering: true,
-    enableGlobalFilter: true,
-    initialState: { density: "compact" },
-    muiPaginationProps: {
-      rowsPerPageOptions: [10, 25, 50],
-    },
-    state: {
-      isLoading: projectsIsLoading,
-    },
-    renderEmptyRowsFallback: () => (
-      <Box sx={{ textAlign: "center", p: 2 }}>
-        <Typography variant="body1" color="textSecondary">
-          {isSuperAdmin
-            ? 'No projects found. Create a new project using the "New Project" button.'
-            : "No projects available for this client. Please contact an administrator."}
-        </Typography>
-      </Box>
-    ),
-  });
+  // Handle delete project
+  const handleDeleteProject = useCallback((projectId: string) => {
+    setActiveProjectId(projectId);
+    setOpenDeleteConfirmation(true);
+  }, []);
 
   if (!selectedClient) {
     return (
@@ -465,336 +376,61 @@ export const ProjectsComponent = () => {
 
       <Divider sx={{ mb: 3 }} />
 
-      <MaterialReactTable table={table} />
+      {/* Projects Table */}
+      <ProjectsTable
+        projects={projectsData || []}
+        isLoading={projectsIsLoading}
+        isClient={isClient}
+        isSuperAdmin={isSuperAdmin}
+        onEditProject={handleEditProject}
+        onDeleteProject={handleDeleteProject}
+        onOpenPaymentMethodsDialog={handleOpenPaymentMethodsDialog}
+        onCreateInvoice={handleOpenCreateInvoiceDialog}
+      />
 
-      {/* New Project Dialog */}
-      <Dialog
+      {/* Dialog Components */}
+      <NewProjectDialog
         open={openNewProjectDialog}
         onClose={() => setOpenNewProjectDialog(false)}
-      >
-        <DialogTitle>Create New Project</DialogTitle>
-        <DialogContent>
-          <TextField
-            autoFocus
-            margin="dense"
-            label="Project Name"
-            type="text"
-            fullWidth
-            variant="outlined"
-            value={newProjectName}
-            onChange={(e) => setNewProjectName(e.target.value)}
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setOpenNewProjectDialog(false)}>Cancel</Button>
-          <Button
-            onClick={handleCreateProject}
-            variant="contained"
-            color="primary"
-            disabled={!newProjectName.trim() || createProjectIsLoading}
-          >
-            {createProjectIsLoading ? <CircularProgress size={24} /> : "Create"}
-          </Button>
-        </DialogActions>
-      </Dialog>
+        projectName={newProjectName}
+        setProjectName={setNewProjectName}
+        onCreateProject={handleCreateProject}
+        isLoading={createProjectIsLoading}
+      />
 
-      {/* Edit Project Dialog */}
-      <Dialog
+      <EditProjectDialog
         open={openEditProjectDialog}
         onClose={() => setOpenEditProjectDialog(false)}
-      >
-        <DialogTitle>Edit Project</DialogTitle>
-        <DialogContent>
-          <TextField
-            autoFocus
-            margin="dense"
-            label="Project Name"
-            type="text"
-            fullWidth
-            variant="outlined"
-            value={editingProject?.name || ""}
-            onChange={(e) =>
-              setEditingProject((prev) =>
-                prev ? { ...prev, name: e.target.value } : null
-              )
-            }
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setOpenEditProjectDialog(false)}>
-            Cancel
-          </Button>
-          <Button
-            onClick={handleUpdateProject}
-            variant="contained"
-            color="primary"
-            disabled={!editingProject?.name?.trim() || updateProjectIsLoading}
-          >
-            {updateProjectIsLoading ? <CircularProgress size={24} /> : "Update"}
-          </Button>
-        </DialogActions>
-      </Dialog>
+        state={editProjectState}
+        onChange={handleEditProjectChange}
+        onUpdateProject={handleUpdateProject}
+      />
 
-      {/* Delete Confirmation Dialog */}
-      <Dialog
+      <DeleteProjectDialog
         open={openDeleteConfirmation}
         onClose={() => setOpenDeleteConfirmation(false)}
-      >
-        <DialogTitle>Confirm Delete</DialogTitle>
-        <DialogContent>
-          <Typography>
-            Are you sure you want to delete this project? This action cannot be
-            undone.
-          </Typography>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setOpenDeleteConfirmation(false)}>
-            Cancel
-          </Button>
-          <Button
-            onClick={handleConfirmDelete}
-            variant="contained"
-            color="error"
-            disabled={deleteProjectIsLoading}
-          >
-            {deleteProjectIsLoading ? <CircularProgress size={24} /> : "Delete"}
-          </Button>
-        </DialogActions>
-      </Dialog>
+        state={deleteProjectState}
+        onChange={handleDeleteProjectChange}
+        onConfirmDelete={handleConfirmDelete}
+      />
 
-      {/* Create Invoice Dialog */}
-      <LocalizationProvider dateAdapter={AdapterDateFns}>
-        <Dialog
-          open={openCreateInvoiceDialog}
-          onClose={() => setOpenCreateInvoiceDialog(false)}
-          maxWidth="md"
-          PaperProps={{
-            sx: {
-              maxWidth: "600px",
-            },
-          }}
-        >
-          <DialogTitle>Create Invoice</DialogTitle>
-          <DialogContent>
-            <TextField
-              autoFocus
-              margin="dense"
-              label="Amount In Cents"
-              type="text"
-              fullWidth
-              variant="outlined"
-              value={invoiceAmount}
-              onChange={handleAmountChange}
-              error={!!amountError}
-              helperText={
-                amountError || "Enter amount with up to 2 decimal places"
-              }
-              InputProps={{
-                startAdornment: <Typography sx={{ mr: 1 }}>$</Typography>,
-              }}
-            />
-            <TextField
-              margin="dense"
-              label="Description"
-              fullWidth
-              multiline
-              rows={4}
-              variant="outlined"
-              value={invoiceDescription}
-              onChange={(e) => setInvoiceDescription(e.target.value)}
-              placeholder="Enter invoice description (optional)"
-            />
-            <Grid container spacing={2} sx={{ mt: 1 }}>
-              <Grid item xs={12} md={4}>
-                <DatePicker
-                  label="Charge Date"
-                  value={invoiceDate}
-                  onChange={(newDate) => setInvoiceDate(newDate)}
-                  minDate={
-                    new Date(new Date().setDate(new Date().getDate() + 1))
-                  }
-                  slotProps={{
-                    textField: {
-                      fullWidth: true,
-                      variant: "outlined",
-                    },
-                  }}
-                />
-              </Grid>
-              <Grid item xs={12} md={4}>
-                <TimePicker
-                  label="Charge Time"
-                  value={invoiceTime}
-                  onChange={(newTime) => setInvoiceTime(newTime)}
-                  slotProps={{
-                    textField: {
-                      fullWidth: true,
-                      variant: "outlined",
-                    },
-                  }}
-                />
-              </Grid>
-              <Grid item xs={12} md={4}>
-                <TextField
-                  select
-                  label="Timezone"
-                  fullWidth
-                  variant="outlined"
-                  value={invoiceTimezone}
-                  onChange={(e) => setInvoiceTimezone(e.target.value)}
-                >
-                  {appTimezones.map((tz) => (
-                    <MenuItem key={tz} value={tz}>
-                      {tz.replace(/_/g, " ")}
-                    </MenuItem>
-                  ))}
-                </TextField>
-              </Grid>
-            </Grid>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setOpenCreateInvoiceDialog(false)}>
-              Cancel
-            </Button>
-            <Button
-              onClick={handleCreateInvoice}
-              variant="contained"
-              color="primary"
-              disabled={
-                !invoiceAmount ||
-                !!amountError ||
-                !invoiceDate ||
-                !invoiceTime ||
-                createInvoiceIsLoading
-              }
-            >
-              {createInvoiceIsLoading ? (
-                <CircularProgress size={24} />
-              ) : (
-                "Create"
-              )}
-            </Button>
-          </DialogActions>
-        </Dialog>
-      </LocalizationProvider>
-
-      {/* Payment Methods Selection Dialog */}
-      <Dialog
+      <PaymentMethodsDialog
         open={openPaymentMethodsDialog}
         onClose={resetPaymentMethodDialogState}
-        PaperProps={{
-          sx: {
-            maxHeight: "500px",
-            overflow: "visible",
-            maxWidth: "500px",
-            width: "100%",
-            position: "relative",
-            zIndex: 1200,
-          },
-        }}
-      >
-        <DialogTitle>
-          Update Payment Methods for {paymentMethodProjectName || "Project"}
-        </DialogTitle>
-        <DialogContent sx={{ overflow: "visible", position: "relative" }}>
-          {stripePaymentMethodsIsLoading || projectIsLoading ? (
-            <Box sx={{ display: "flex", justifyContent: "center", p: 4 }}>
-              <CircularProgress />
-            </Box>
-          ) : stripePaymentMethods.length === 0 ? (
-            <Typography variant="body1" color="textSecondary" sx={{ py: 2 }}>
-              No payment methods available. Please add payment methods first.
-            </Typography>
-          ) : (
-            <Box sx={{ position: "relative", zIndex: 1300 }}>
-              {/* Display currently selected payment methods */}
-              {selectedPaymentMethodIds.length > 0 && (
-                <Box
-                  sx={{
-                    mb: 2,
-                    p: 2,
-                    bgcolor: "#f0f7ff",
-                    borderRadius: 1,
-                    border: "1px solid #b3d1ff",
-                  }}
-                >
-                  <Typography
-                    variant="subtitle2"
-                    sx={{ mb: 1, color: "#0047b3" }}
-                  >
-                    Currently Selected Payment Method:
-                  </Typography>
-                  <Box
-                    sx={{ display: "flex", flexDirection: "column", gap: 1 }}
-                  >
-                    {selectedPaymentMethodIds.map((id) => {
-                      const method = stripePaymentMethods.find(
-                        (m) => m.id === id
-                      );
-                      return method ? (
-                        <Typography key={id} variant="body2">
-                          {method.card?.brand?.toUpperCase() || "CARD"} ****{" "}
-                          {method.card?.last4 || "****"}
-                        </Typography>
-                      ) : (
-                        <Typography
-                          key={id}
-                          variant="body2"
-                          color="text.secondary"
-                        >
-                          Unknown payment method ({id})
-                        </Typography>
-                      );
-                    })}
-                  </Box>
-                </Box>
-              )}
+        projectName={paymentMethodProjectName}
+        state={paymentMethodsState}
+        onChange={handlePaymentMethodsChange}
+        paymentMethods={stripePaymentMethods || []}
+        onUpdatePaymentMethods={handleUpdatePaymentMethods}
+      />
 
-              <SelectComponent
-                title="Payment Methods"
-                placeholder="Select payment methods"
-                options={(stripePaymentMethods || []).map((method) => ({
-                  value: method.id,
-                  label: `${method.card?.brand?.toUpperCase() || "CARD"} **** ${
-                    method.card?.last4 || "****"
-                  }`,
-                }))}
-                selectedValues={selectedPaymentMethodIds}
-                onChange={(values) => {
-                  console.log("New selected values:", values);
-                  // If single value returned (not array), wrap in array
-                  const newValues = Array.isArray(values)
-                    ? values
-                    : values?.value
-                    ? [values.value]
-                    : [];
-                  setSelectedPaymentMethodIds(newValues);
-                }}
-                isMulti={false}
-              />
-            </Box>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={resetPaymentMethodDialogState}>Cancel</Button>
-          <Button
-            onClick={handleUpdatePaymentMethods}
-            variant="contained"
-            color="primary"
-            disabled={
-              updatePaymentMethodsIsLoading ||
-              stripePaymentMethods.length === 0 ||
-              projectIsLoading
-            }
-          >
-            {updatePaymentMethodsIsLoading ? (
-              <CircularProgress size={24} />
-            ) : (
-              "Save"
-            )}
-          </Button>
-        </DialogActions>
-      </Dialog>
+      <CreateInvoiceDialog
+        open={openCreateInvoiceDialog}
+        onClose={() => setOpenCreateInvoiceDialog(false)}
+        state={createInvoiceState}
+        onChange={handleCreateInvoiceChange}
+        onCreateInvoice={handleCreateInvoice}
+      />
     </Box>
   );
 };
