@@ -10,12 +10,12 @@ export const processValidityState = (validityState) => {
     validityState
       .filter((vs) => vs.identifier === "general")
       .forEach((vs) =>
-        vs.errors.forEach((error) =>
-          enqueueSnackbar(error.message, {
-            variant: "error",
-            autoHideDuration: 3000,
-          })
-        )
+        vs.errors.forEach((error) => {
+          // enqueueSnackbar(error.message, {
+          //   variant: "error",
+          //   autoHideDuration: 3000,
+          // })
+        })
       );
   }
 };

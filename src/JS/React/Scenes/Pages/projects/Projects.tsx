@@ -317,7 +317,7 @@ export const ProjectsComponent = () => {
                     handleOpenPaymentMethodsDialog(row.original.id!)
                   }
                 >
-                  Update Payments
+                  Update Payment Methods
                 </Button>
               </>
             )}
@@ -343,6 +343,7 @@ export const ProjectsComponent = () => {
                 <Button
                   variant="outlined"
                   size="small"
+                  disabled={row.original.paymentMethodIds?.length === 0}
                   color="success"
                   onClick={() =>
                     handleOpenCreateInvoiceDialog(row.original.id!)

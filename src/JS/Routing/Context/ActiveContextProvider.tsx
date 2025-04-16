@@ -8,6 +8,7 @@ import {
 } from "JS/Routing/Context/ServiceContextProvider";
 import { useQuery } from "@tanstack/react-query";
 import { useLocationQueryKeysFactory } from "JS/React/Hooks/UseQueryKeys";
+import { useGetMe } from "JS/React/Hooks/Users";
 
 interface OrgLocContextProps {
   children: React.ReactNode;
@@ -27,25 +28,18 @@ export const ActiveContextProvider = (props: OrgLocContextProps) => {
   const { loggedInUser, updateLoggedInUser } = useLoggedInUser();
   const keys = useLocationQueryKeysFactory();
 
-  const { data: employeeMeResp, isLoading: employeeMeLoading } = useQuery({
-    queryKey: keys.user.sessionUser(),
-    queryFn: () => {
-      const service = new UserService();
-
-      return service.getMe();
-    },
-  });
+  const { userData, getMeResponse, isLoading } = useGetMe();
 
   const [isServicesLoaded, setIsServicesLoaded] = useState<boolean>(false);
 
   useEffect(() => {
-    if (!employeeMeLoading && employeeMeResp) {
+    if (!isLoading && getMeResponse) {
       updateLoggedInUser({
         ...loggedInUser,
-        ...employeeMeResp.data,
+        ...userData,
       });
     }
-  }, [employeeMeResp, employeeMeLoading]);
+  }, [userData, isLoading]);
 
   useEffect(() => {
     // For re-render of on update of new service

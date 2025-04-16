@@ -109,7 +109,7 @@ export const InviteClientDialog = ({
         },
       }}
     >
-      <AppDialogTitle>Invite Client</AppDialogTitle>
+      <AppDialogTitle>Invite User</AppDialogTitle>
       <AppDialogContent>
         <AppTextField
           label="Name"

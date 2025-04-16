@@ -11,7 +11,7 @@ export const useGetMe = () => {
 
   const { isAuthenticated } = useAuth();
   const { data, isFetched, isLoading } = useQuery({
-    enabled: isAuthenticated !== null,
+    enabled: isAuthenticated === true,
     queryKey: user.sessionUser(),
     queryFn: async () => {
       const response = await userService.getMe();

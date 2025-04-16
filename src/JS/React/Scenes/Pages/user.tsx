@@ -124,36 +124,36 @@ export const UserComponent = (props: UserComponentProps) => {
           );
         },
       },
-      {
-        accessorKey: "utils",
-        header: "Utils",
-        enableHiding: false,
-        Cell: ({ row }) => {
-          return (
-            <Box>
-              <Tooltip title="Change User Role" placement="top">
-                <IconButton
-                  onClick={() => {
-                    setUpdateUserId(row.original.id);
-                    setShowChangeUserRoleDialog(true);
-                  }}
-                >
-                  <FingerprintIcon color="action" />
-                </IconButton>
-              </Tooltip>
-              <Tooltip title="Update Password" placement="top">
-                <IconButton
-                  onClick={() => {
-                    setShowUpdatePasswordDialog(true);
-                  }}
-                >
-                  <LockResetIcon color="action" />
-                </IconButton>
-              </Tooltip>
-            </Box>
-          );
-        },
-      },
+      // {
+      //   accessorKey: "utils",
+      //   header: "Utils",
+      //   enableHiding: false,
+      //   Cell: ({ row }) => {
+      //     return (
+      //       <Box>
+      //         <Tooltip title="Change User Role" placement="top">
+      //           <IconButton
+      //             onClick={() => {
+      //               setUpdateUserId(row.original.id);
+      //               setShowChangeUserRoleDialog(true);
+      //             }}
+      //           >
+      //             <FingerprintIcon color="action" />
+      //           </IconButton>
+      //         </Tooltip>
+      //         <Tooltip title="Update Password" placement="top">
+      //           <IconButton
+      //             onClick={() => {
+      //               setShowUpdatePasswordDialog(true);
+      //             }}
+      //           >
+      //             <LockResetIcon color="action" />
+      //           </IconButton>
+      //         </Tooltip>
+      //       </Box>
+      //     );
+      //   },
+      // },
     ],
     [usersData]
   );

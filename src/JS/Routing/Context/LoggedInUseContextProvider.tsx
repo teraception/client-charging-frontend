@@ -47,7 +47,7 @@ export const LoggedInUserContextProvider = (
 
   return (
     <LoggedInUserContext.Provider value={{ updateLoggedInUser, loggedInUser }}>
-      {isFetched && children}
+      {children}
     </LoggedInUserContext.Provider>
   );
 };

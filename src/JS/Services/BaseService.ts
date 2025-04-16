@@ -108,6 +108,7 @@ export class BaseService {
           const statusCode = response.status;
           const errorMessage =
             response.data?.message ||
+            response.data?.data?.message ||
             HTTP_ERROR_MESSAGES[statusCode] ||
             "An unexpected error occurred";
 

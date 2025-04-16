@@ -32,7 +32,13 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <ThemeProvider theme={theme}>
         <CssBaseline />
-        <SnackbarProvider maxSnack={4}>
+        <SnackbarProvider
+          maxSnack={4}
+          anchorOrigin={{
+            horizontal: "right",
+            vertical: "bottom",
+          }}
+        >
           <BrowserRouter>
             <CognitoContextProvider>
               <ServiceContextProvider>

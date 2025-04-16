@@ -10,7 +10,7 @@ import {
   Typography,
   CircularProgress,
 } from "@mui/material";
-import { Client } from "JS/typingForNow/types";
+import { Client, Role } from "JS/typingForNow/types";
 import { AppSelect } from "../../../Components/AppSelect";
 import { useGetAllUsers } from "JS/React/Hooks/Users";
 import {
@@ -119,10 +119,12 @@ export const ManageUsersDialog = ({
               value={getSelectedUsers()}
               onChange={handleUserChange}
               options={
-                usersData?.map((user) => ({
-                  value: user.id,
-                  label: user.name || user.email,
-                })) || []
+                usersData
+                  ?.filter((x) => !x.role.includes(Role.SUPER_ADMIN))
+                  .map((user) => ({
+                    value: user.id,
+                    label: user.name || user.email,
+                  })) || []
               }
               isMulti
               fullWidth
