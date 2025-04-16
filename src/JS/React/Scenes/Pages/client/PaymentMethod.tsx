@@ -25,6 +25,8 @@ import {
 import AddIcon from "@mui/icons-material/Add";
 import { useNavigate } from "react-router";
 import { useRouting } from "JS/React/Hooks/Routes";
+import { Project } from "JS/typingForNow/types";
+import AppChip from "JS/React/Components/AppChip";
 
 const styles = (props: any, theme: Theme) => ({
   root: css({
@@ -72,9 +74,24 @@ export const PaymentMethodComponent = (props: PaymentMethodComponentProps) => {
     () => [
       {
         accessorKey: "project",
-        header: "Project Name",
+        header: "Project Names",
         enableHiding: false,
-        accessorFn: (row: any) => row.dbLinkedProject?.name || "-",
+        accessorFn: (row: any) =>
+          row.dbLinkedProjects
+            .map((project: Project) => project.name)
+            .join(", "),
+        Cell: ({ row }: any) => (
+          <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
+            {row.original.dbLinkedProjects.map((project: Project) => (
+              <AppChip
+                key={project.id}
+                label={project.name}
+                chipVariant="primary-fill"
+                style={{ margin: "0 5px 0 5px" }}
+              />
+            ))}
+          </Box>
+        ),
       },
       {
         accessorKey: "brand",

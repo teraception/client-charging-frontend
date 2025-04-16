@@ -244,8 +244,7 @@ export interface CreatePaymentMethodDto {
 }
 
 export interface StripePaymentMethod extends StripePaymentMethodType {
-  dbLinkedProject: Project;
-  dbLinkedPaymentMethod: PaymentMethod;
+  dbLinkedProjects: Project[];
 }
 
 export interface Invoice {
