@@ -8,8 +8,9 @@ import { StripeElements } from "@stripe/stripe-js";
 import { useRouting } from "../Hooks/Routes";
 import { useParams } from "react-router";
 import { useCreatePaymentMethod } from "../Hooks/Payment-methods/Hook";
+import { config } from "JS/Config";
 
-const dashboardUrl = import.meta.env.VITE_DASHBOARD_URL;
+const dashboardUrl = config.dashboardUrl;
 
 export const PaymentSetupForm = () => {
   const stripe = useStripe();
