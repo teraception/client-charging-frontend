@@ -12,6 +12,8 @@ import {
   IconButton,
   CircularProgress,
   Tooltip,
+  MenuItem,
+  Grid,
 } from "@mui/material";
 import { useSelectedClient } from "JS/React/Context/SelectedClientContext";
 import AddIcon from "@mui/icons-material/Add";
@@ -33,14 +35,25 @@ import { useCreateInvoice } from "JS/React/Hooks/Invoices/Hook";
 import { useGetStripePaymentMethodsByClientId } from "JS/React/Hooks/PaymentMethods/Hook";
 import { SelectComponent } from "JS/React/Components/SelectComponent";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
-import { LocalizationProvider, DatePicker } from "@mui/x-date-pickers";
+import {
+  LocalizationProvider,
+  DatePicker,
+  TimePicker,
+} from "@mui/x-date-pickers";
 import dayjs from "dayjs";
+import utc from "dayjs/plugin/utc";
+import timezone from "dayjs/plugin/timezone";
 import numeral from "numeral";
 import {
   MaterialReactTable,
   useMaterialReactTable,
   MRT_ColumnDef,
 } from "material-react-table";
+import { appTimezones } from "JS/types/constants";
+
+// Initialize dayjs plugins
+dayjs.extend(utc);
+dayjs.extend(timezone);
 
 export const ProjectsComponent = () => {
   const { selectedClient } = useSelectedClient();
@@ -71,6 +84,8 @@ export const ProjectsComponent = () => {
   const [invoiceDate, setInvoiceDate] = useState<Date | null>(
     new Date(new Date().setDate(new Date().getDate() + 1))
   );
+  const [invoiceTime, setInvoiceTime] = useState<Date | null>(new Date());
+  const [invoiceTimezone, setInvoiceTimezone] = useState(dayjs.tz.guess());
   const [invoiceProjectId, setInvoiceProjectId] = useState<string | null>(null);
   const [amountError, setAmountError] = useState("");
 
@@ -194,6 +209,8 @@ export const ProjectsComponent = () => {
     setInvoiceAmount("");
     setInvoiceDescription("");
     setInvoiceDate(new Date(new Date().setDate(new Date().getDate() + 1)));
+    setInvoiceTime(new Date());
+    setInvoiceTimezone(dayjs.tz.guess());
     setAmountError("");
     setOpenCreateInvoiceDialog(true);
   }, []);
@@ -239,6 +256,7 @@ export const ProjectsComponent = () => {
       !selectedClient ||
       !invoiceProjectId ||
       !invoiceDate ||
+      !invoiceTime ||
       amountError ||
       !invoiceAmount
     ) {
@@ -246,8 +264,18 @@ export const ProjectsComponent = () => {
     }
 
     try {
-      // Convert date to unix timestamp (milliseconds)
-      const chargeDate = dayjs(invoiceDate).unix();
+      // Combine date, time and timezone to create Unix timestamp
+      const dateObj = dayjs(invoiceDate);
+      const timeObj = dayjs(invoiceTime);
+
+      // Create a combined date+time in the specified timezone
+      const combinedDateTime = dayjs.tz(
+        `${dateObj.format("YYYY-MM-DD")}T${timeObj.format("HH:mm:00")}`,
+        invoiceTimezone
+      );
+
+      // Convert to unix timestamp (seconds)
+      const chargeDate = combinedDateTime.unix();
 
       await createInvoice({
         clientId: selectedClient.id,
@@ -539,6 +567,12 @@ export const ProjectsComponent = () => {
         <Dialog
           open={openCreateInvoiceDialog}
           onClose={() => setOpenCreateInvoiceDialog(false)}
+          maxWidth="md"
+          PaperProps={{
+            sx: {
+              maxWidth: "600px",
+            },
+          }}
         >
           <DialogTitle>Create Invoice</DialogTitle>
           <DialogContent>
@@ -570,20 +604,53 @@ export const ProjectsComponent = () => {
               onChange={(e) => setInvoiceDescription(e.target.value)}
               placeholder="Enter invoice description (optional)"
             />
-            <Box sx={{ mt: 2 }}>
-              <DatePicker
-                label="Charge Date"
-                value={invoiceDate}
-                onChange={(newDate) => setInvoiceDate(newDate)}
-                minDate={new Date(new Date().setDate(new Date().getDate() + 1))}
-                slotProps={{
-                  textField: {
-                    fullWidth: true,
-                    variant: "outlined",
-                  },
-                }}
-              />
-            </Box>
+            <Grid container spacing={2} sx={{ mt: 1 }}>
+              <Grid item xs={12} md={4}>
+                <DatePicker
+                  label="Charge Date"
+                  value={invoiceDate}
+                  onChange={(newDate) => setInvoiceDate(newDate)}
+                  minDate={
+                    new Date(new Date().setDate(new Date().getDate() + 1))
+                  }
+                  slotProps={{
+                    textField: {
+                      fullWidth: true,
+                      variant: "outlined",
+                    },
+                  }}
+                />
+              </Grid>
+              <Grid item xs={12} md={4}>
+                <TimePicker
+                  label="Charge Time"
+                  value={invoiceTime}
+                  onChange={(newTime) => setInvoiceTime(newTime)}
+                  slotProps={{
+                    textField: {
+                      fullWidth: true,
+                      variant: "outlined",
+                    },
+                  }}
+                />
+              </Grid>
+              <Grid item xs={12} md={4}>
+                <TextField
+                  select
+                  label="Timezone"
+                  fullWidth
+                  variant="outlined"
+                  value={invoiceTimezone}
+                  onChange={(e) => setInvoiceTimezone(e.target.value)}
+                >
+                  {appTimezones.map((tz) => (
+                    <MenuItem key={tz} value={tz}>
+                      {tz.replace(/_/g, " ")}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              </Grid>
+            </Grid>
           </DialogContent>
           <DialogActions>
             <Button onClick={() => setOpenCreateInvoiceDialog(false)}>
@@ -597,6 +664,7 @@ export const ProjectsComponent = () => {
                 !invoiceAmount ||
                 !!amountError ||
                 !invoiceDate ||
+                !invoiceTime ||
                 createInvoiceIsLoading
               }
             >
