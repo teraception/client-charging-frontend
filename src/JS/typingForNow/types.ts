@@ -255,6 +255,7 @@ export interface Invoice {
   clientId: string;
   projectId: string;
   amount: number;
+  description?: string;
   chargeDate: number;
   createdAt?: number;
   updatedAt?: number;
@@ -264,8 +265,13 @@ export interface CreateInvoiceDto {
   projectId: string;
   amount: number;
   chargeDate: number;
+  description?: string;
   platformInvoiceId?: string;
   platformInvoiceItemId?: string;
+}
+
+export interface InvoicePayNow {
+  invoiceId: string;
 }
 
 export interface StripeInvoiceObj extends StripeInvoiceType {

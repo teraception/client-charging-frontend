@@ -67,6 +67,7 @@ export const ProjectsComponent = () => {
   // Invoice creation state
   const [openCreateInvoiceDialog, setOpenCreateInvoiceDialog] = useState(false);
   const [invoiceAmount, setInvoiceAmount] = useState("");
+  const [invoiceDescription, setInvoiceDescription] = useState("");
   const [invoiceDate, setInvoiceDate] = useState<Date | null>(
     new Date(new Date().setDate(new Date().getDate() + 1))
   );
@@ -191,6 +192,7 @@ export const ProjectsComponent = () => {
   const handleOpenCreateInvoiceDialog = useCallback((projectId: string) => {
     setInvoiceProjectId(projectId);
     setInvoiceAmount("");
+    setInvoiceDescription("");
     setInvoiceDate(new Date(new Date().setDate(new Date().getDate() + 1)));
     setAmountError("");
     setOpenCreateInvoiceDialog(true);
@@ -252,6 +254,7 @@ export const ProjectsComponent = () => {
         projectId: invoiceProjectId,
         amount: parseFloat(invoiceAmount),
         chargeDate: chargeDate,
+        description: invoiceDescription.trim() || undefined,
       });
 
       setOpenCreateInvoiceDialog(false);
@@ -555,6 +558,17 @@ export const ProjectsComponent = () => {
               InputProps={{
                 startAdornment: <Typography sx={{ mr: 1 }}>$</Typography>,
               }}
+            />
+            <TextField
+              margin="dense"
+              label="Description"
+              fullWidth
+              multiline
+              rows={4}
+              variant="outlined"
+              value={invoiceDescription}
+              onChange={(e) => setInvoiceDescription(e.target.value)}
+              placeholder="Enter invoice description (optional)"
             />
             <Box sx={{ mt: 2 }}>
               <DatePicker

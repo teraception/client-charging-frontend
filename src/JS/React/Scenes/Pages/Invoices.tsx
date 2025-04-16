@@ -19,8 +19,10 @@ import { useAccessHandler } from "JS/React/Hooks/AccessHandler";
 import {
   useGetInvoicesByClient,
   useDeleteInvoice,
+  usePayInvoiceNow,
 } from "JS/React/Hooks/Invoices/Hook";
 import DeleteIcon from "@mui/icons-material/Delete";
+import PaymentIcon from "@mui/icons-material/Payment";
 import dayjs from "dayjs";
 import numeral from "numeral";
 import {
@@ -31,7 +33,7 @@ import {
 
 const Invoices = () => {
   const { selectedClient } = useSelectedClient();
-  const { isSuperAdmin } = useAccessHandler();
+  const { isSuperAdmin, isClient } = useAccessHandler();
   const [openDeleteConfirmation, setOpenDeleteConfirmation] = useState(false);
   const [activeInvoiceData, setActiveInvoiceData] = useState<{
     invoiceId: string;
@@ -40,6 +42,9 @@ const Invoices = () => {
     invoiceId: "",
     dbInvoiceId: "",
   });
+  const [processingPayment, setProcessingPayment] = useState<string | null>(
+    null
+  );
 
   // Get invoices for the selected client
   const { invoicesData, invoicesIsLoading, refetchInvoices } =
@@ -48,6 +53,9 @@ const Invoices = () => {
   // Delete invoice mutation
   const { deleteInvoice, deleteInvoiceIsLoading } = useDeleteInvoice();
 
+  // Pay invoice now mutation
+  const { payInvoiceNow, payInvoiceNowIsLoading } = usePayInvoiceNow();
+
   // Handle delete invoice
   const handleDeleteClick = (invoiceId: string, dbInvoiceId: string) => {
     setActiveInvoiceData({
@@ -55,6 +63,19 @@ const Invoices = () => {
       dbInvoiceId,
     });
     setOpenDeleteConfirmation(true);
+  };
+
+  // Handle pay now
+  const handlePayNow = async (invoiceId: string) => {
+    try {
+      setProcessingPayment(invoiceId);
+      await payInvoiceNow(invoiceId);
+      refetchInvoices();
+    } catch (error) {
+      console.error("Error processing payment:", error);
+    } finally {
+      setProcessingPayment(null);
+    }
   };
 
   // Handle confirm delete invoice
@@ -133,35 +154,56 @@ const Invoices = () => {
         ),
         size: 120,
       },
-      ...(isSuperAdmin
-        ? [
-            {
-              id: "actions",
-              header: "Actions",
-              Cell: ({ row }) =>
-                row.original.status_transitions.finalized_at == null && (
-                  <Tooltip title="Delete invoice">
-                    <IconButton
-                      onClick={() =>
-                        handleDeleteClick(
-                          row.original.id,
-                          row.original.dbInvoiceObject.id
-                        )
-                      }
-                      size="small"
-                      color="error"
-                    >
-                      <DeleteIcon fontSize="small" />
-                    </IconButton>
-                  </Tooltip>
-                ),
-              align: "right",
-              size: 100,
-            },
-          ]
-        : []),
+      {
+        id: "actions",
+        header: "Actions",
+        Cell: ({ row }) => (
+          <Box sx={{ display: "flex", gap: 1 }}>
+            {isSuperAdmin &&
+              row.original.status_transitions.finalized_at == null && (
+                <Tooltip title="Delete invoice">
+                  <IconButton
+                    onClick={() =>
+                      handleDeleteClick(
+                        row.original.id,
+                        row.original.dbInvoiceObject.id
+                      )
+                    }
+                    size="small"
+                    color="error"
+                  >
+                    <DeleteIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+              )}
+            {isClient &&
+              (row.original.status !== "paid" ||
+                row.original.status! == "past_due") && (
+                <Tooltip title="Pay now">
+                  <IconButton
+                    onClick={() => handlePayNow(row.original.id)}
+                    size="small"
+                    color="primary"
+                    disabled={
+                      processingPayment === row.original.id ||
+                      payInvoiceNowIsLoading
+                    }
+                  >
+                    {processingPayment === row.original.id ? (
+                      <CircularProgress size={16} />
+                    ) : (
+                      <PaymentIcon fontSize="small" />
+                    )}
+                  </IconButton>
+                </Tooltip>
+              )}
+          </Box>
+        ),
+        align: "right",
+        size: 100,
+      },
     ],
-    [isSuperAdmin]
+    [isSuperAdmin, processingPayment, payInvoiceNowIsLoading]
   );
 
   // Initialize table

@@ -110,3 +110,32 @@ export const useDeleteInvoice = () => {
     deleteInvoiceResponse: data,
   };
 };
+
+export const usePayInvoiceNow = () => {
+  const { invoiceService } = useAppServiceContext();
+  const queryClient = useQueryClient();
+  const { invoice } = useQueryKeys();
+
+  const {
+    mutateAsync,
+    isPending: isLoading,
+    data,
+  } = useMutation({
+    mutationFn: async (invoiceId: string) => {
+      const response = await invoiceService.payInvoiceNow(invoiceId);
+      return response;
+    },
+    onSuccess: (_, invoiceId) => {
+      // Invalidate all invoice queries to refresh the data
+      queryClient.invalidateQueries({
+        queryKey: invoice.all,
+      });
+    },
+  });
+
+  return {
+    payInvoiceNow: mutateAsync,
+    payInvoiceNowIsLoading: isLoading,
+    payInvoiceNowResponse: data,
+  };
+};

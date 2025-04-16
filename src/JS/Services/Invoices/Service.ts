@@ -4,6 +4,7 @@ import { BaseService } from "../BaseService";
 import {
   CreateInvoiceDto,
   Invoice,
+  InvoicePayNow,
   StripeInvoiceObj,
 } from "JS/typingForNow/types";
 
@@ -44,6 +45,16 @@ export class InvoiceService extends BaseService {
       url: this.activeRoute().server.api.invoice.delete(dbInvoiceId),
       method: "DELETE",
       data: { invoiceId },
+    });
+  }
+
+  payInvoiceNow(
+    invoiceId: string
+  ): Promise<WithValidityState<AppResponse<boolean>>> {
+    return this.doServerXHR<boolean>({
+      url: this.activeRoute().server.api.invoice.payNow(invoiceId),
+      method: "POST",
+      data: {},
     });
   }
 }

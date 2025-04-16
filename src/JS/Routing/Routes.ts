@@ -63,6 +63,7 @@ export const routesForContext = () => (params?: RouteParams) => {
           getInvoiceByClientId: (clientId: string) =>
             `${base}/invoice/client/${clientId}`,
           delete: (invoiceId: string) => `${base}/invoice/${invoiceId}`,
+          payNow: (invoiceId: string) => `${base}/invoice/${invoiceId}/pay-now`,
         },
       }))(`${config.baseApiUrl}`),
     },
@@ -101,7 +102,6 @@ export const routesForContext = () => (params?: RouteParams) => {
     },
   };
 };
-
 const getBestMatch = (route: string, routes: any) => {
   if (typeof routes === "function") {
     const r = routes();
