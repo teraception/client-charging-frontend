@@ -6,9 +6,9 @@ import { DatePicker, DatePickerProps } from "@mui/x-date-pickers/DatePicker";
 import { Theme } from "@mui/material";
 import dayjs from "dayjs";
 import clsx from "clsx";
-import { FieldState } from "@teraception/client-payment-integration-lib";
 import { css } from "@emotion/react";
 import { StyleClassKey, makeStyles } from "JS/React/Style/styleHelper";
+import { FieldState } from "JS/typingForNow/types";
 // import { FieldState } from "JS/typingForNow/types";
 
 export type AppDatePickerClassKey = StyleClassKey<typeof useStyles>;
@@ -71,7 +71,7 @@ const styles = (props: any, theme: Theme) => {
 
 const [useStyles, useEmotionStyles] =
   makeStyles<StyleClassKey<typeof styles>>(styles);
-export interface AppDatePickerProps<TDate>
+export interface AppDatePickerProps<TDate extends Date | dayjs.Dayjs>
   extends DatePickerProps<TDate>,
     React.RefAttributes<HTMLDivElement> {
   value: TDate;
@@ -79,11 +79,11 @@ export interface AppDatePickerProps<TDate>
   errorInfo: FieldState;
 }
 
-function AppDatePicker(props: AppDatePickerProps<number>) {
+function AppDatePicker(props: AppDatePickerProps<dayjs.Dayjs>) {
   const { onChange, value, className, label = "", ...rest } = props;
   const handleDateChange = (date: dayjs.Dayjs | null) => {
     if (date) {
-      onChange(date.unix());
+      onChange(date);
     }
   };
   const classes = useStyles(props);
@@ -93,12 +93,13 @@ function AppDatePicker(props: AppDatePickerProps<number>) {
       <LocalizationProvider dateAdapter={AdapterDayjs}>
         <DatePicker
           label={label}
-          value={value === null ? dayjs() : dayjs.unix(value)}
+          value={value}
           onChange={handleDateChange}
           className={clsx(className, classes.root)}
           onError={(error, value) => {
             console.log(error);
           }}
+          {...rest}
         />
       </LocalizationProvider>
     </React.Fragment>

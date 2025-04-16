@@ -48,7 +48,7 @@ export const ActiveContextProvider = (props: OrgLocContextProps) => {
   }, []);
 
   return (
-    <ServiceContextProvider services={mappedServices}>
+    <ServiceContextProvider>
       {isServicesLoaded && children}
     </ServiceContextProvider>
   );
