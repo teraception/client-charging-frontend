@@ -59,12 +59,30 @@ export const SelectedClientProvider: React.FC<SelectedClientProviderProps> = ({
         selectedClient,
         setSelectedClient: (client) => {
           if (client?.id) {
-            // Update URL when client changes
-            window.history.replaceState(
-              {},
-              "",
-              linkProvider.react.projects(client.id)
-            );
+            // Only update URL if not already on a client-specific page
+            const currentPath = window.location.pathname;
+            const pathSegments = currentPath.split("/");
+            const clientsIndex = pathSegments.indexOf("clients");
+
+            // Don't update URL if already on a client-specific page
+            if (
+              clientsIndex === -1 ||
+              (clientsIndex >= 0 && !pathSegments[clientsIndex + 1])
+            ) {
+              window.history.replaceState(
+                {},
+                "",
+                linkProvider.react.projects(client.id)
+              );
+            } else if (
+              clientsIndex >= 0 &&
+              pathSegments[clientsIndex + 1] !== client.id
+            ) {
+              // If switching clients, preserve the current page type but update client ID
+              const newPathSegments = [...pathSegments];
+              newPathSegments[clientsIndex + 1] = client.id;
+              window.history.replaceState({}, "", newPathSegments.join("/"));
+            }
           }
           setSelectedClient(client);
         },
