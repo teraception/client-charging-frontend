@@ -140,7 +140,9 @@ export const Layout = (props: LayoutProps) => {
         path={"clients/:clientId/projects"}
         element={<ProjectsComponent />}
       />
-      <Route path={"clients/:clientId/invoices"} element={<Invoices />} />
+      {selectedClient && selectedClient?.customerId && (
+        <Route path={"clients/:clientId/invoices"} element={<Invoices />} />
+      )}
       <Route
         path={"clients/:clientId/payment-methods"}
         key={"paymentMethods"}

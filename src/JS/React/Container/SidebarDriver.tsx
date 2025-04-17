@@ -253,15 +253,19 @@ const Component = (props: BackendSidebarProps) => {
         route: provider.react.paymentMethods(selectedClient.id),
         icon: <AddCardIcon className={classes.iconColor} />,
       });
-      sideBarItems.push({
-        identifier: "invoices",
-        title: "Invoices",
-        hasChilds: false,
-        button: true,
-        skip: false,
-        route: provider.react.invoicesList(selectedClient.id),
-        icon: <ReceiptIcon className={classes.iconColor} />,
-      });
+
+      // Only show invoices if client has an ID
+      if (selectedClient?.customerId) {
+        sideBarItems.push({
+          identifier: "invoices",
+          title: "Invoices",
+          hasChilds: false,
+          button: true,
+          skip: false,
+          route: provider.react.invoicesList(selectedClient.id),
+          icon: <ReceiptIcon className={classes.iconColor} />,
+        });
+      }
     }
 
     sideBarItems = filterItems(sideBarItems).map(setCommonItemProps);
