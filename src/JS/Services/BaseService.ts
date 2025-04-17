@@ -106,11 +106,21 @@ export class BaseService {
 
           // Display appropriate error message using notistack
           const statusCode = response.status;
-          const errorMessage =
-            response.data?.message ||
-            response.data?.data?.message ||
-            HTTP_ERROR_MESSAGES[statusCode] ||
-            "An unexpected error occurred";
+
+          let errorMessage = "";
+
+          if (response?.data?.data?.code === 11000) {
+            errorMessage = `${
+              Object.values(response.data?.data?.keyValue)[0]
+            } already exists`;
+          } else {
+            errorMessage =
+              response.data?.message ||
+              response.data?.data?.message ||
+              response.data?.data?.raw?.message ||
+              HTTP_ERROR_MESSAGES[statusCode] ||
+              "An unexpected error occurred";
+          }
 
           // Capture in Sentry for monitoring
           Sentry.captureException(error, {

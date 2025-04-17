@@ -169,7 +169,7 @@ export const useDeleteProject = () => {
 export const useUpdatePaymentMethodsForProject = () => {
   const { projectService } = useAppServiceContext();
   const queryClient = useQueryClient();
-  const { project } = useQueryKeys();
+  const { project, paymentMethod } = useQueryKeys();
 
   const {
     mutateAsync,
@@ -194,6 +194,9 @@ export const useUpdatePaymentMethodsForProject = () => {
       queryClient.invalidateQueries({
         // queryKey: project.details(response?.data?.id),
         queryKey: project.all,
+      });
+      queryClient.invalidateQueries({
+        queryKey: paymentMethod.all,
       });
     },
   });
