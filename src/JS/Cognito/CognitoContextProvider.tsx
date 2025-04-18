@@ -169,6 +169,7 @@ export const CognitoContextProvider = (props: CognitoContextProps) => {
     setLoading(true);
     setIsChangingPassword(true);
     const response = await resetPassword(info);
+    setLoading(false);
     return response;
   };
 
