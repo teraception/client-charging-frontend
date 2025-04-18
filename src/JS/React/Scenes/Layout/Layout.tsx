@@ -30,6 +30,7 @@ import { UserComponent } from "../Pages/user";
 import { useAccessHandler } from "JS/React/Hooks/AccessHandler";
 import AppButton from "JS/React/Components/AppButton";
 import { ClientComponent } from "../Pages/client";
+import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import { PaymentMethodComponent } from "../Pages/client/PaymentMethod";
 import { StripeIndex } from "JS/React/stripe/Index";
 import { PaymentSetupComplete } from "JS/React/stripe/SetupComplete";
@@ -191,7 +192,10 @@ export const Layout = (props: LayoutProps) => {
               setShowUserActionDropdown(true);
             }}
           >
-            {loggedInUser?.user?.email}
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              {loggedInUser?.user?.name}
+              <AccountCircleIcon />
+            </Box>
           </AppButton>
           <Menu
             id="basic-menu"
@@ -202,12 +206,12 @@ export const Layout = (props: LayoutProps) => {
               "aria-labelledby": "basic-button",
             }}
             anchorOrigin={{
-              vertical: "top",
-              horizontal: "left",
+              vertical: "bottom",
+              horizontal: "right",
             }}
             transformOrigin={{
               vertical: "top",
-              horizontal: "left",
+              horizontal: "right",
             }}
           >
             <MenuItem

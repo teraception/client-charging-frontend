@@ -235,9 +235,6 @@ export const ClientSelector: React.FC<ClientSelectorProps> = ({
 
   return (
     <Box sx={{ p: 2 }} className={className}>
-      <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: "normal" }}>
-        <span>Select Client</span>
-      </Typography>
       <Autocomplete
         options={clients}
         getOptionLabel={(option) => option.name}
@@ -245,7 +242,22 @@ export const ClientSelector: React.FC<ClientSelectorProps> = ({
         onChange={(_, newValue) => handleClientChange(newValue)}
         disableClearable={isClient}
         renderInput={(params) => (
-          <TextField {...params} label="Select Client" variant="outlined" />
+          <TextField
+            {...params}
+            label="Select Client"
+            variant="outlined"
+            sx={{
+              "& .MuiInputBase-input": {
+                color: "white",
+              },
+              // "& .MuiOutlinedInput-notchedOutline": {
+              //   borderColor: "white",
+              // },
+              // "& .MuiInputLabel-root": {
+              //   color: "white",
+              // },
+            }}
+          />
         )}
       />
     </Box>
