@@ -145,9 +145,9 @@ const Invoices = () => {
         header: "Due Date",
         Cell: ({ row }) =>
           row.original.dbInvoiceObject.chargeDate
-            ? dayjs(row.original.dbInvoiceObject.chargeDate).format(
-                "DD/MM/YYYY"
-              )
+            ? dayjs
+                .unix(row.original.dbInvoiceObject.chargeDate)
+                .format("DD/MM/YYYY")
             : "-",
         size: 150,
       },
@@ -162,7 +162,7 @@ const Invoices = () => {
         header: "Status",
         Cell: ({ row }) => (
           <Chip
-            label={row.original.status}
+            label={row.original.status.toUpperCase()}
             color={
               row.original.status === "paid"
                 ? "success"
@@ -212,9 +212,9 @@ const Invoices = () => {
                           clientName: selectedClient?.name,
                           projectName: row.original.project?.name,
                           amount: Math.round(row.original.total / 100),
-                          chargeDate: dayjs(
-                            row.original.dbInvoiceObject.chargeDate
-                          ).format("YYYY-MM-DD"),
+                          chargeDate: dayjs
+                            .unix(row.original.dbInvoiceObject.chargeDate)
+                            .format("YYYY-MM-DD"),
                           description: row.original.description,
                           invoiceSendDate: dayjs().format("YYYY-MM-DD"),
                         });
