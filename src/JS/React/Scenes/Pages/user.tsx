@@ -82,6 +82,11 @@ export const UserComponent = (props: UserComponentProps) => {
   const usersTableCoulumns = useMemo(
     () => [
       {
+        accessorKey: "name",
+        header: "Name",
+        enableHiding: false,
+      },
+      {
         accessorKey: "email",
         header: "Email",
         enableHiding: false,
@@ -161,6 +166,7 @@ export const UserComponent = (props: UserComponentProps) => {
     return usersData?.map((user) => {
       return {
         id: user.id,
+        name: user.name,
         email: user.email,
         role: user.role.map((x) => (
           <AppChip
