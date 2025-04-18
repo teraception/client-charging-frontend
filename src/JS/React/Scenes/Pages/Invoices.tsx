@@ -122,9 +122,12 @@ const Invoices = () => {
         size: 150,
       },
       {
-        accessorKey: "due_date",
-        header: "Due Date",
-        Cell: ({ row }) => formatDate(row.original.due_date),
+        accessorKey: "next_payment_attempt",
+        header: "Next Payment Attempt",
+        Cell: ({ row }) =>
+          row.original.next_payment_attempt
+            ? formatDate(row.original.next_payment_attempt)
+            : "-",
         size: 150,
       },
       {
@@ -159,23 +162,25 @@ const Invoices = () => {
         header: "Actions",
         Cell: ({ row }) => (
           <Box sx={{ display: "flex", gap: 1 }}>
-            {isSuperAdmin &&
-              row.original.status_transitions.finalized_at == null && (
-                <Tooltip title="Delete invoice">
-                  <IconButton
-                    onClick={() =>
-                      handleDeleteClick(
-                        row.original.id,
-                        row.original.dbInvoiceObject.id
-                      )
-                    }
-                    size="small"
-                    color="error"
-                  >
-                    <DeleteIcon fontSize="small" />
-                  </IconButton>
-                </Tooltip>
-              )}
+            {isSuperAdmin && (
+              <Tooltip title="Delete invoice">
+                <IconButton
+                  disabled={
+                    row.original.status_transitions.finalized_at !== null
+                  }
+                  onClick={() =>
+                    handleDeleteClick(
+                      row.original.id,
+                      row.original.dbInvoiceObject.id
+                    )
+                  }
+                  size="small"
+                  color="error"
+                >
+                  <DeleteIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            )}
             {isClient &&
               (row.original.status !== "paid" ||
                 row.original.status! == "past_due") && (

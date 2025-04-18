@@ -19,6 +19,12 @@ import {
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { appTimezones } from "JS/types/constants";
 
+// Helper function to convert dollars to cents
+const dollarsToCents = (dollars: string | number): number => {
+  const amount = typeof dollars === "string" ? parseFloat(dollars) : dollars;
+  return Math.round(amount * 100);
+};
+
 interface CreateInvoiceDialogState {
   invoiceAmount: string;
   invoiceDescription: string;
@@ -91,7 +97,12 @@ export const CreateInvoiceDialog: React.FC<CreateInvoiceDialogProps> = ({
 
     // Validate amount locally
     if (value && !/^\d+(\.\d{0,2})?$/.test(value)) {
-      error = "Please enter a valid amount";
+      error = "Please enter a valid dollar amount";
+    }
+
+    // Validate that amount doesn't exceed six figures
+    if (value && parseFloat(value) > 999999.99) {
+      error = "Amount cannot exceed $999,999.99";
     }
 
     // Only update local state for typing
@@ -136,8 +147,11 @@ export const CreateInvoiceDialog: React.FC<CreateInvoiceDialogProps> = ({
 
   // Submit handler - ensure parent state is up-to-date before submitting
   const handleSubmit = async () => {
+    // Convert dollar amount to cents
+    const amountInCents = dollarsToCents(formState.amount);
+
     // Sync all fields one last time
-    onChange("invoiceAmount", formState.amount);
+    onChange("invoiceAmount", amountInCents);
     onChange("invoiceDescription", formState.description);
     onChange("amountError", formState.amountError);
 
@@ -185,7 +199,7 @@ export const CreateInvoiceDialog: React.FC<CreateInvoiceDialogProps> = ({
           <TextField
             autoFocus
             margin="dense"
-            label="Amount In Cents"
+            label="Amount"
             type="text"
             fullWidth
             variant="outlined"
@@ -194,8 +208,7 @@ export const CreateInvoiceDialog: React.FC<CreateInvoiceDialogProps> = ({
             onBlur={handleAmountBlur}
             error={!!formState.amountError}
             helperText={
-              formState.amountError ||
-              "Enter amount with up to 2 decimal places"
+              formState.amountError || "Enter amount in dollars (e.g., 10.99)"
             }
             InputProps={{
               startAdornment: <Typography sx={{ mr: 1 }}>$</Typography>,

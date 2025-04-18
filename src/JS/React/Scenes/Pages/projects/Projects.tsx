@@ -35,6 +35,12 @@ import {
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
+// Helper function to convert dollars to cents
+const dollarsToCents = (dollars: string | number): number => {
+  const amount = typeof dollars === "string" ? parseFloat(dollars) : dollars;
+  return Math.round(amount * 100);
+};
+
 export const ProjectsComponent = () => {
   const { selectedClient } = useSelectedClient();
   const { isSuperAdmin, isClient } = useAccessHandler();
@@ -301,10 +307,20 @@ export const ProjectsComponent = () => {
       );
       const chargeDate = combinedDateTime.unix();
 
+      // Convert dollar amount to cents before sending to API
+      const amountInCents = dollarsToCents(invoiceAmount);
+      console.log(
+        "98c-1ur-1984u14",
+        "Amount in dollars:",
+        invoiceAmount,
+        "Amount in cents:",
+        amountInCents
+      );
+
       await createInvoice({
         clientId: selectedClient.id,
         projectId: invoiceProjectId,
-        amount: parseFloat(invoiceAmount),
+        amount: amountInCents,
         chargeDate: chargeDate,
         description: invoiceDescription.trim() || undefined,
       });
