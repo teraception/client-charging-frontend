@@ -269,6 +269,17 @@ export interface CreateInvoiceDto {
   platformInvoiceItemId?: string;
 }
 
+export interface StripeCustomInvoiceSendDto {
+  invoiceId: string;
+  projectName: string;
+  clientName: string;
+  amount: number;
+  chargeDate: string;
+  description: string;
+  invoiceSendDate: string;
+  clientId: string;
+}
+
 export interface InvoicePayNow {
   invoiceId: string;
 }

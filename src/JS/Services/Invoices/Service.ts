@@ -5,6 +5,7 @@ import {
   CreateInvoiceDto,
   Invoice,
   InvoicePayNow,
+  StripeCustomInvoiceSendDto,
   StripeInvoiceObj,
 } from "JS/typingForNow/types";
 
@@ -55,6 +56,19 @@ export class InvoiceService extends BaseService {
       url: this.activeRoute().server.api.invoice.payNow(invoiceId),
       method: "POST",
       data: {},
+    });
+  }
+
+  sendInvoiceEmailToClient(
+    invoiceId: string,
+    data: StripeCustomInvoiceSendDto
+  ): Promise<WithValidityState<AppResponse<boolean>>> {
+    return this.doServerXHR<boolean>({
+      url: this.activeRoute().server.api.invoice.sendInvoiceEmailToClient(
+        invoiceId
+      ),
+      method: "POST",
+      data,
     });
   }
 }

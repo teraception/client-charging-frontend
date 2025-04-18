@@ -1,7 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAppServiceContext } from "JS/Routing/Context/ServiceContextProvider";
 import { useQueryKeys } from "../UseQueryKeys";
-import { CreateInvoiceDto } from "JS/typingForNow/types";
+import {
+  CreateInvoiceDto,
+  StripeCustomInvoiceSendDto,
+} from "JS/typingForNow/types";
 
 export const useGetInvoicesByClient = (clientId: string | null) => {
   const { invoiceService } = useAppServiceContext();
@@ -137,5 +140,30 @@ export const usePayInvoiceNow = () => {
     payInvoiceNow: mutateAsync,
     payInvoiceNowIsLoading: isLoading,
     payInvoiceNowResponse: data,
+  };
+};
+
+export const useSendInvoiceEmailToClient = () => {
+  const { invoiceService } = useAppServiceContext();
+
+  const {
+    mutateAsync,
+    isPending: isLoading,
+    data,
+  } = useMutation({
+    mutationFn: async (data: StripeCustomInvoiceSendDto) => {
+      const response = await invoiceService.sendInvoiceEmailToClient(
+        data.invoiceId,
+        data
+      );
+      return response;
+    },
+    onSuccess: () => {},
+  });
+
+  return {
+    sendInvoiceEmailToClient: mutateAsync,
+    sendInvoiceEmailToClientIsLoading: isLoading,
+    sendInvoiceEmailToClientResponse: data,
   };
 };

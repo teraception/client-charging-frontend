@@ -13,6 +13,8 @@ import {
   Divider,
   Chip,
   Tooltip,
+  Snackbar,
+  Alert,
 } from "@mui/material";
 import { useSelectedClient } from "JS/React/Context/SelectedClientContext";
 import { useAccessHandler } from "JS/React/Hooks/AccessHandler";
@@ -20,9 +22,12 @@ import {
   useGetInvoicesByClient,
   useDeleteInvoice,
   usePayInvoiceNow,
+  useSendInvoiceEmailToClient,
 } from "JS/React/Hooks/Invoices/Hook";
 import DeleteIcon from "@mui/icons-material/Delete";
+import SendIcon from "@mui/icons-material/Send";
 import PaymentIcon from "@mui/icons-material/Payment";
+import DownloadIcon from "@mui/icons-material/Download";
 import dayjs from "dayjs";
 import numeral from "numeral";
 import {
@@ -45,6 +50,11 @@ const Invoices = () => {
   const [processingPayment, setProcessingPayment] = useState<string | null>(
     null
   );
+  const [snackbar, setSnackbar] = useState<{
+    open: boolean;
+    message: string;
+    severity: "success" | "error";
+  }>({ open: false, message: "", severity: "success" });
 
   // Get invoices for the selected client
   const { invoicesData, invoicesIsLoading, refetchInvoices } =
@@ -55,6 +65,10 @@ const Invoices = () => {
 
   // Pay invoice now mutation
   const { payInvoiceNow, payInvoiceNowIsLoading } = usePayInvoiceNow();
+
+  // Send invoice email mutation
+  const { sendInvoiceEmailToClient, sendInvoiceEmailToClientIsLoading } =
+    useSendInvoiceEmailToClient();
 
   // Handle delete invoice
   const handleDeleteClick = (invoiceId: string, dbInvoiceId: string) => {
@@ -96,13 +110,18 @@ const Invoices = () => {
   };
 
   // Format date from timestamp
-  const formatDate = (timestamp: number) => {
+  const formatTimestampsDate = (timestamp: number) => {
     return dayjs(timestamp * 1000).format("DD/MM/YYYY");
   };
 
   // Format amount to display with currency and commas using numeral
   const formatAmount = (amount: number) => {
     return numeral(amount).format("$0,0.00");
+  };
+
+  // Handle snackbar close
+  const handleSnackbarClose = () => {
+    setSnackbar({ ...snackbar, open: false });
   };
 
   // Define table columns
@@ -122,18 +141,20 @@ const Invoices = () => {
         size: 150,
       },
       {
-        accessorKey: "next_payment_attempt",
-        header: "Next Payment Attempt",
+        accessorKey: "dbInvoiceObject.chargeDate",
+        header: "Due Date",
         Cell: ({ row }) =>
-          row.original.next_payment_attempt
-            ? formatDate(row.original.next_payment_attempt)
+          row.original.dbInvoiceObject.chargeDate
+            ? dayjs(row.original.dbInvoiceObject.chargeDate).format(
+                "DD/MM/YYYY"
+              )
             : "-",
         size: 150,
       },
       {
         accessorKey: "created",
         header: "Created At",
-        Cell: ({ row }) => formatDate(row.original.created),
+        Cell: ({ row }) => formatTimestampsDate(row.original.created),
         size: 150,
       },
       {
@@ -163,52 +184,115 @@ const Invoices = () => {
         Cell: ({ row }) => (
           <Box sx={{ display: "flex", gap: 1 }}>
             {isSuperAdmin && (
-              <Tooltip title="Delete invoice">
-                <IconButton
-                  disabled={
-                    row.original.status_transitions.finalized_at !== null
-                  }
-                  onClick={() =>
-                    handleDeleteClick(
-                      row.original.id,
-                      row.original.dbInvoiceObject.id
-                    )
-                  }
-                  size="small"
-                  color="error"
-                >
-                  <DeleteIcon fontSize="small" />
-                </IconButton>
-              </Tooltip>
-            )}
-            {isClient &&
-              (row.original.status !== "paid" ||
-                row.original.status! == "past_due") && (
-                <Tooltip title="Pay now">
+              <>
+                <Tooltip title="Delete invoice">
                   <IconButton
-                    onClick={() => handlePayNow(row.original.id)}
+                    disabled={
+                      row.original.status_transitions.finalized_at !== null
+                    }
+                    onClick={() =>
+                      handleDeleteClick(
+                        row.original.id,
+                        row.original.dbInvoiceObject.id
+                      )
+                    }
+                    size="small"
+                    color="error"
+                  >
+                    <DeleteIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+                <Tooltip title="Email Invoice">
+                  <IconButton
+                    onClick={async () => {
+                      try {
+                        await sendInvoiceEmailToClient({
+                          invoiceId: row.original.id,
+                          clientId: selectedClient?.id,
+                          clientName: selectedClient?.name,
+                          projectName: row.original.project?.name,
+                          amount: Math.round(row.original.total / 100),
+                          chargeDate: dayjs(
+                            row.original.dbInvoiceObject.chargeDate
+                          ).format("YYYY-MM-DD"),
+                          description: row.original.description,
+                          invoiceSendDate: dayjs().format("YYYY-MM-DD"),
+                        });
+                        setSnackbar({
+                          open: true,
+                          message: "Invoice email sent successfully",
+                          severity: "success",
+                        });
+                      } catch (error) {
+                        console.error("Error sending invoice email:", error);
+                      }
+                    }}
                     size="small"
                     color="primary"
-                    disabled={
-                      processingPayment === row.original.id ||
-                      payInvoiceNowIsLoading
-                    }
+                    disabled={sendInvoiceEmailToClientIsLoading}
                   >
-                    {processingPayment === row.original.id ? (
+                    {sendInvoiceEmailToClientIsLoading ? (
                       <CircularProgress size={16} />
                     ) : (
-                      <PaymentIcon fontSize="small" />
+                      <SendIcon fontSize="small" />
                     )}
                   </IconButton>
                 </Tooltip>
-              )}
+              </>
+            )}
+
+            {row.original.status === "paid" && row.original.invoice_pdf ? (
+              <Tooltip title="Download PDF">
+                <IconButton
+                  onClick={() =>
+                    window.open(row.original.invoice_pdf, "_blank")
+                  }
+                  size="small"
+                  color="primary"
+                >
+                  <DownloadIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            ) : (
+              <></>
+            )}
+
+            {isClient &&
+            (row.original.status !== "paid" ||
+              row.original.status! == "past_due") ? (
+              <Tooltip title="Pay now">
+                <IconButton
+                  onClick={() => handlePayNow(row.original.id)}
+                  size="small"
+                  color="primary"
+                  disabled={
+                    processingPayment === row.original.id ||
+                    payInvoiceNowIsLoading
+                  }
+                >
+                  {processingPayment === row.original.id ? (
+                    <CircularProgress size={16} />
+                  ) : (
+                    <PaymentIcon fontSize="small" />
+                  )}
+                </IconButton>
+              </Tooltip>
+            ) : (
+              <></>
+            )}
           </Box>
         ),
         align: "right",
         size: 100,
       },
     ],
-    [isSuperAdmin, processingPayment, payInvoiceNowIsLoading]
+    [
+      isSuperAdmin,
+      processingPayment,
+      payInvoiceNowIsLoading,
+      sendInvoiceEmailToClientIsLoading,
+      selectedClient,
+    ]
   );
 
   // Initialize table
@@ -285,6 +369,18 @@ const Invoices = () => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Snackbar for notifications */}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={6000}
+        onClose={handleSnackbarClose}
+        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+      >
+        <Alert onClose={handleSnackbarClose} severity={snackbar.severity}>
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };
