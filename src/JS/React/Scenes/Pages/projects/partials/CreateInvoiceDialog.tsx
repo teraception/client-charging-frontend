@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -10,6 +10,8 @@ import {
   Typography,
   CircularProgress,
   MenuItem,
+  Box,
+  IconButton,
 } from "@mui/material";
 import {
   LocalizationProvider,
@@ -17,12 +19,20 @@ import {
   TimePicker,
 } from "@mui/x-date-pickers";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
-import { appTimezones } from "JS/types/constants";
+import { appTimezones, currencies } from "JS/types/constants";
+import CloudUploadIcon from "@mui/icons-material/CloudUpload";
+import AttachFileIcon from "@mui/icons-material/AttachFile";
+import CloseIcon from "@mui/icons-material/Close";
 
 // Helper function to convert dollars to cents
 const dollarsToCents = (dollars: string | number): number => {
   const amount = typeof dollars === "string" ? parseFloat(dollars) : dollars;
   return Math.round(amount * 100);
+};
+
+// Helper function to convert Date to epoch seconds (not milliseconds)
+const dateToEpochSeconds = (date: Date | null): number => {
+  return date ? Math.floor(date.getTime() / 1000) : 0;
 };
 
 interface CreateInvoiceDialogState {
@@ -31,6 +41,10 @@ interface CreateInvoiceDialogState {
   invoiceDate: Date | null;
   invoiceTime: Date | null;
   invoiceTimezone: string;
+  invoiceCurrency: string;
+  chargeDays: string;
+  chargeTime: Date | null;
+  shortId: string;
   amountError: string;
   isLoading: boolean;
 }
@@ -58,7 +72,15 @@ export const CreateInvoiceDialog: React.FC<CreateInvoiceDialogProps> = ({
     date: state.invoiceDate,
     time: state.invoiceTime,
     timezone: state.invoiceTimezone,
+    currency: state.invoiceCurrency,
+    chargeDays: state.chargeDays,
+    chargeTime: state.chargeTime,
+    shortId: state.shortId,
+    files: [] as File[],
   });
+
+  // File input ref
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Update local state when dialog opens or resets
   useEffect(() => {
@@ -70,6 +92,11 @@ export const CreateInvoiceDialog: React.FC<CreateInvoiceDialogProps> = ({
         date: state.invoiceDate,
         time: state.invoiceTime,
         timezone: state.invoiceTimezone,
+        currency: state.invoiceCurrency,
+        chargeDays: state.chargeDays,
+        chargeTime: state.chargeTime,
+        shortId: state.shortId,
+        files: [],
       });
     }
   }, [
@@ -79,6 +106,10 @@ export const CreateInvoiceDialog: React.FC<CreateInvoiceDialogProps> = ({
     state.invoiceDate,
     state.invoiceTime,
     state.invoiceTimezone,
+    state.invoiceCurrency,
+    state.chargeDays,
+    state.chargeTime,
+    state.shortId,
     state.amountError,
   ]);
 
@@ -145,17 +176,113 @@ export const CreateInvoiceDialog: React.FC<CreateInvoiceDialogProps> = ({
     onChange("invoiceTimezone", value);
   };
 
+  // Handle currency changes
+  const handleCurrencyChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    updateFormState("currency", value);
+    onChange("invoiceCurrency", value);
+  };
+
+  // Handle charge days changes
+  const handleChargeDaysChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    // Only allow positive integers
+    if (value === "" || /^\d+$/.test(value)) {
+      updateFormState("chargeDays", value);
+      onChange("chargeDays", value);
+    }
+  };
+
+  // Handle charge time changes
+  const handleChargeTimeChange = (newTime: Date | null) => {
+    updateFormState("chargeTime", newTime);
+    onChange("chargeTime", newTime);
+  };
+
+  // Handle file upload
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const filesArray = Array.from(e.target.files);
+      setFormState((prev) => ({
+        ...prev,
+        files: [...prev.files, ...filesArray],
+      }));
+    }
+  };
+
+  // Handle file removal
+  const handleFileRemove = (index: number) => {
+    setFormState((prev) => ({
+      ...prev,
+      files: prev.files.filter((_, i) => i !== index),
+    }));
+  };
+
+  // Trigger file input click
+  const handleUploadClick = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
+
+  // Add a handler for shortId changes
+  const handleShortIdChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    updateFormState("shortId", value);
+    onChange("shortId", value);
+  };
+
   // Submit handler - ensure parent state is up-to-date before submitting
   const handleSubmit = async () => {
+    // Calculate schedule date/time in epoch seconds
+    let sendDateTime = 0;
+    if (formState.date && formState.time) {
+      const scheduleDate = new Date(formState.date);
+      const scheduleTime = new Date(formState.time);
+
+      scheduleDate.setHours(
+        scheduleTime.getHours(),
+        scheduleTime.getMinutes(),
+        scheduleTime.getSeconds()
+      );
+
+      sendDateTime = dateToEpochSeconds(scheduleDate);
+    }
+
+    // Calculate charge date/time in epoch seconds
+    let chargeDayTime = 0;
+    if (formState.date && formState.chargeTime && formState.chargeDays) {
+      const chargeDate = new Date(formState.date);
+      const chargeTime = new Date(formState.chargeTime);
+
+      // Add the specified number of days
+      chargeDate.setDate(chargeDate.getDate() + parseInt(formState.chargeDays));
+
+      // Set the time
+      chargeDate.setHours(
+        chargeTime.getHours(),
+        chargeTime.getMinutes(),
+        chargeTime.getSeconds()
+      );
+
+      chargeDayTime = dateToEpochSeconds(chargeDate);
+    }
+
     // Convert dollar amount to cents
     const amountInCents = dollarsToCents(formState.amount);
 
     // Sync all fields one last time
-    onChange("invoiceAmount", amountInCents);
+    onChange("invoiceAmount", formState.amount);
     onChange("invoiceDescription", formState.description);
     onChange("amountError", formState.amountError);
+    onChange("invoiceCurrency", formState.currency);
+    onChange("chargeDays", formState.chargeDays);
+    onChange("chargeTime", formState.chargeTime);
+    onChange("shortId", formState.shortId);
 
-    // Then call the parent's submit function
+    // Files are handled by the parent component through the invoice-file-input element
+
+    // Call the parent's submit function
     await onCreateInvoice();
 
     // Clear form state after successful submission
@@ -166,6 +293,11 @@ export const CreateInvoiceDialog: React.FC<CreateInvoiceDialogProps> = ({
       date: null,
       time: null,
       timezone: formState.timezone, // Keep timezone as user preference
+      currency: formState.currency, // Keep currency as user preference
+      chargeDays: "",
+      chargeTime: null,
+      shortId: "",
+      files: [],
     };
 
     // Update local state
@@ -177,6 +309,9 @@ export const CreateInvoiceDialog: React.FC<CreateInvoiceDialogProps> = ({
     onChange("amountError", "");
     onChange("invoiceDate", null);
     onChange("invoiceTime", null);
+    onChange("chargeDays", "");
+    onChange("chargeTime", null);
+    onChange("shortId", "");
   };
 
   // Extract loading state from parent
@@ -190,30 +325,65 @@ export const CreateInvoiceDialog: React.FC<CreateInvoiceDialogProps> = ({
         maxWidth="md"
         PaperProps={{
           sx: {
-            maxWidth: "600px",
+            maxWidth: "700px",
           },
         }}
       >
         <DialogTitle>Create Invoice</DialogTitle>
         <DialogContent>
-          <TextField
-            autoFocus
-            margin="dense"
-            label="Amount"
-            type="text"
-            fullWidth
-            variant="outlined"
-            value={formState.amount}
-            onChange={handleAmountChange}
-            onBlur={handleAmountBlur}
-            error={!!formState.amountError}
-            helperText={
-              formState.amountError || "Enter amount in dollars (e.g., 10.99)"
-            }
-            InputProps={{
-              startAdornment: <Typography sx={{ mr: 1 }}>$</Typography>,
-            }}
-          />
+          <Grid container spacing={2} sx={{ mt: 1 }}>
+            <Grid item xs={12} md={4}>
+              <TextField
+                autoFocus
+                margin="dense"
+                label="Amount"
+                type="text"
+                fullWidth
+                variant="outlined"
+                value={formState.amount}
+                onChange={handleAmountChange}
+                onBlur={handleAmountBlur}
+                error={!!formState.amountError}
+                helperText={
+                  formState.amountError ||
+                  "Enter amount in dollars (e.g., 10.99)"
+                }
+                InputProps={{
+                  startAdornment: <Typography sx={{ mr: 1 }}>$</Typography>,
+                }}
+              />
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <TextField
+                select
+                label="Currency"
+                fullWidth
+                variant="outlined"
+                value={formState.currency}
+                onChange={handleCurrencyChange}
+                sx={{ mt: 1 }}
+              >
+                {currencies.map((currency) => (
+                  <MenuItem key={currency} value={currency}>
+                    {currency}
+                  </MenuItem>
+                ))}
+              </TextField>
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <TextField
+                label="Short ID"
+                type="text"
+                fullWidth
+                variant="outlined"
+                value={formState.shortId}
+                onChange={handleShortIdChange}
+                placeholder="Enter a unique ID"
+                sx={{ mt: 1 }}
+              />
+            </Grid>
+          </Grid>
+
           <TextField
             margin="dense"
             label="Description"
@@ -226,10 +396,14 @@ export const CreateInvoiceDialog: React.FC<CreateInvoiceDialogProps> = ({
             onBlur={handleDescriptionBlur}
             placeholder="Enter invoice description (optional)"
           />
-          <Grid container spacing={2} sx={{ mt: 1 }}>
+
+          <Typography variant="subtitle1" sx={{ mt: 2, mb: 1 }}>
+            Schedule Information
+          </Typography>
+          <Grid container spacing={2}>
             <Grid item xs={12} md={4}>
               <DatePicker
-                label="Charge Date"
+                label="Schedule Date"
                 value={formState.date}
                 onChange={handleDateChange}
                 minDate={new Date(new Date().setDate(new Date().getDate() + 1))}
@@ -243,7 +417,7 @@ export const CreateInvoiceDialog: React.FC<CreateInvoiceDialogProps> = ({
             </Grid>
             <Grid item xs={12} md={4}>
               <TimePicker
-                label="Charge Time"
+                label="Schedule Time"
                 value={formState.time}
                 onChange={handleTimeChange}
                 slotProps={{
@@ -271,6 +445,97 @@ export const CreateInvoiceDialog: React.FC<CreateInvoiceDialogProps> = ({
               </TextField>
             </Grid>
           </Grid>
+
+          <Typography variant="subtitle1" sx={{ mt: 2, mb: 1 }}>
+            Charge Information
+          </Typography>
+          <Grid container spacing={2}>
+            <Grid item xs={12} md={6}>
+              <TextField
+                label="Charge After (Days)"
+                type="text"
+                fullWidth
+                variant="outlined"
+                value={formState.chargeDays}
+                onChange={handleChargeDaysChange}
+                placeholder="Enter number of days"
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TimePicker
+                label="Charge Time"
+                value={formState.chargeTime}
+                onChange={handleChargeTimeChange}
+                slotProps={{
+                  textField: {
+                    fullWidth: true,
+                    variant: "outlined",
+                  },
+                }}
+              />
+            </Grid>
+          </Grid>
+
+          <Typography variant="subtitle1" sx={{ mt: 2, mb: 1 }}>
+            Attachments
+          </Typography>
+          <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+            <Button
+              variant="outlined"
+              startIcon={<CloudUploadIcon />}
+              onClick={handleUploadClick}
+              sx={{ mr: 2 }}
+            >
+              Upload Files
+            </Button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              multiple
+              onChange={handleFileUpload}
+              style={{ display: "none" }}
+              id="invoice-file-input"
+            />
+            <Typography variant="body2" color="text.secondary">
+              {formState.files.length} file(s) selected
+            </Typography>
+          </Box>
+
+          {formState.files.length > 0 && (
+            <Box sx={{ mb: 2 }}>
+              {formState.files.map((file, index) => (
+                <Box
+                  key={index}
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    p: 1,
+                    borderRadius: 1,
+                    bgcolor: "background.paper",
+                    mb: 0.5,
+                  }}
+                >
+                  <AttachFileIcon fontSize="small" sx={{ mr: 1 }} />
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      flexGrow: 1,
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                    }}
+                  >
+                    {file.name}
+                  </Typography>
+                  <IconButton
+                    size="small"
+                    onClick={() => handleFileRemove(index)}
+                  >
+                    <CloseIcon fontSize="small" />
+                  </IconButton>
+                </Box>
+              ))}
+            </Box>
+          )}
         </DialogContent>
         <DialogActions>
           <Button onClick={onClose}>Cancel</Button>
@@ -283,6 +548,9 @@ export const CreateInvoiceDialog: React.FC<CreateInvoiceDialogProps> = ({
               !!formState.amountError ||
               !formState.date ||
               !formState.time ||
+              !formState.currency ||
+              !formState.chargeDays ||
+              !formState.chargeTime ||
               isLoading
             }
           >

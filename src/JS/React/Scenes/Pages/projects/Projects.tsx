@@ -30,6 +30,7 @@ import {
   CreateInvoiceDialog,
   ProjectsTable,
 } from "./partials";
+import { InvoiceStatus } from "JS/typingForNow/Invoice";
 
 // Initialize dayjs plugins
 dayjs.extend(utc);
@@ -88,6 +89,10 @@ export const ProjectsComponent = () => {
     invoiceDate: new Date(new Date().setDate(new Date().getDate() + 1)),
     invoiceTime: new Date(),
     invoiceTimezone: dayjs.tz.guess(),
+    invoiceCurrency: "USD", // Default currency
+    chargeDays: "1", // Default to 1 day
+    chargeTime: new Date(), // Default to current time
+    shortId: "", // Add shortId field
     amountError: "",
     isLoading: false,
   });
@@ -264,10 +269,24 @@ export const ProjectsComponent = () => {
       invoiceDate: new Date(new Date().setDate(new Date().getDate() + 1)),
       invoiceTime: new Date(),
       invoiceTimezone: dayjs.tz.guess(),
+      invoiceCurrency: "USD", // Default currency
+      chargeDays: "1", // Default to 1 day
+      chargeTime: new Date(), // Default to current time
+      shortId: "", // Initialize shortId as empty
       amountError: "",
       isLoading: false,
     });
     setOpenCreateInvoiceDialog(true);
+
+    // Clear any previously selected files
+    setTimeout(() => {
+      const fileInput = document.querySelector(
+        "#invoice-file-input"
+      ) as HTMLInputElement;
+      if (fileInput) {
+        fileInput.value = "";
+      }
+    }, 100);
   }, []);
 
   // Format currency for display
@@ -285,6 +304,10 @@ export const ProjectsComponent = () => {
       invoiceTime,
       invoiceTimezone,
       invoiceDescription,
+      invoiceCurrency,
+      chargeDays,
+      chargeTime,
+      shortId, // Extract shortId from state
     } = createInvoiceState;
 
     if (
@@ -293,36 +316,59 @@ export const ProjectsComponent = () => {
       !invoiceDate ||
       !invoiceTime ||
       amountError ||
-      !invoiceAmount
+      !invoiceAmount ||
+      !invoiceCurrency ||
+      !chargeDays ||
+      !chargeTime ||
+      !shortId // Add validation for shortId
     ) {
       return;
     }
 
     try {
+      // Create schedule date/time epoch in seconds
       const dateObj = dayjs(invoiceDate);
       const timeObj = dayjs(invoiceTime);
       const combinedDateTime = dayjs.tz(
         `${dateObj.format("YYYY-MM-DD")}T${timeObj.format("HH:mm:00")}`,
         invoiceTimezone
       );
-      const chargeDate = combinedDateTime.unix();
+      const sendDateTime = combinedDateTime.unix(); // Already in seconds
+
+      // Create charge date/time epoch in seconds
+      const chargeDateObj = dayjs(invoiceDate).add(parseInt(chargeDays), "day");
+      const chargeTimeObj = dayjs(chargeTime);
+      const combinedChargeDateTime = dayjs.tz(
+        `${chargeDateObj.format("YYYY-MM-DD")}T${chargeTimeObj.format(
+          "HH:mm:00"
+        )}`,
+        invoiceTimezone
+      );
+      const chargeDayTime = combinedChargeDateTime.unix(); // Already in seconds
 
       // Convert dollar amount to cents before sending to API
       const amountInCents = dollarsToCents(invoiceAmount);
-      console.log(
-        "98c-1ur-1984u14",
-        "Amount in dollars:",
-        invoiceAmount,
-        "Amount in cents:",
-        amountInCents
-      );
+
+      // Get file input element to access any selected files
+      const fileInput = document.querySelector(
+        "#invoice-file-input"
+      ) as HTMLInputElement;
+      const files = fileInput?.files || undefined;
 
       await createInvoice({
-        clientId: selectedClient.id,
-        projectId: invoiceProjectId,
-        amount: amountInCents,
-        chargeDate: chargeDate,
-        description: invoiceDescription.trim() || undefined,
+        data: {
+          clientId: selectedClient.id,
+          projectId: invoiceProjectId,
+          amount: amountInCents,
+          currency: invoiceCurrency,
+          sendDateTime: sendDateTime,
+          chargeDayTime: chargeDayTime,
+          description: invoiceDescription.trim() || undefined,
+          status: InvoiceStatus.DRAFT,
+          shortId: shortId, // Use shortId from state
+          // Other fields required by CreateInvoiceDto are added here
+        },
+        files: files,
       });
 
       setOpenCreateInvoiceDialog(false);

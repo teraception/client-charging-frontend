@@ -3,7 +3,6 @@ import {
   Typography,
   Button,
   Box,
-  Paper,
   IconButton,
   Dialog,
   DialogTitle,
@@ -36,6 +35,7 @@ import {
   useMaterialReactTable,
   MRT_ColumnDef,
 } from "material-react-table";
+import { InvoiceDto, InvoiceStatus } from "JS/typingForNow/Invoice";
 
 const Invoices = () => {
   const { selectedClient } = useSelectedClient();
@@ -99,7 +99,6 @@ const Invoices = () => {
 
     try {
       await deleteInvoice({
-        invoiceId: activeInvoiceData.invoiceId,
         dbInvoiceId: activeInvoiceData.dbInvoiceId,
       });
 
@@ -127,21 +126,14 @@ const Invoices = () => {
 
   // Handle send invoice email
   const handleSendInvoiceEmail = async (
-    invoiceData: any,
+    invoiceData: InvoiceDto,
     isTesting: boolean
   ) => {
     try {
+      if (!invoiceData.id) return;
+
       await sendInvoiceEmailToClient({
         invoiceId: invoiceData.id,
-        clientId: selectedClient?.id,
-        clientName: selectedClient?.name,
-        projectName: invoiceData.project?.name,
-        amount: Math.round(invoiceData.total / 100),
-        chargeDate: dayjs
-          .unix(invoiceData.dbInvoiceObject.chargeDate)
-          .format("YYYY-MM-DD"),
-        description: invoiceData.description,
-        invoiceSendDate: dayjs().format("YYYY-MM-DD"),
         testing: isTesting,
       });
       setSnackbar({
@@ -162,7 +154,7 @@ const Invoices = () => {
   };
 
   // Define table columns
-  const columns = useMemo<MRT_ColumnDef<any>[]>(
+  const columns = useMemo<MRT_ColumnDef<InvoiceDto>[]>(
     () => [
       {
         accessorKey: "project.name",
@@ -171,27 +163,27 @@ const Invoices = () => {
         size: 180,
       },
       {
-        accessorKey: "total",
+        accessorKey: "amount",
         header: "Total Amount",
-        // converting to dollars
-        Cell: ({ row }) => formatAmount(row.original.total / 100),
+        Cell: ({ row }) => formatAmount(row.original.amount),
         size: 150,
       },
       {
-        accessorKey: "dbInvoiceObject.chargeDate",
+        accessorKey: "chargeDayTime",
         header: "Due Date",
         Cell: ({ row }) =>
-          row.original.dbInvoiceObject.chargeDate
-            ? dayjs
-                .unix(row.original.dbInvoiceObject.chargeDate)
-                .format("DD/MM/YYYY")
+          row.original.chargeDayTime
+            ? formatTimestampsDate(row.original.chargeDayTime)
             : "-",
         size: 150,
       },
       {
-        accessorKey: "created",
-        header: "Created At",
-        Cell: ({ row }) => formatTimestampsDate(row.original.created),
+        accessorKey: "scheduleDate",
+        header: "Schedule Date",
+        Cell: ({ row }) =>
+          row.original.sendDateTime
+            ? formatTimestampsDate(row.original.sendDateTime)
+            : "-",
         size: 150,
       },
       {
@@ -199,15 +191,15 @@ const Invoices = () => {
         header: "Status",
         Cell: ({ row }) => (
           <Chip
-            label={row.original.status.toUpperCase()}
+            label={row.original.status || "-"}
             color={
-              row.original.status === "paid"
+              row.original.status === InvoiceStatus.PAID
                 ? "success"
-                : row.original.status === "pending"
-                ? "warning"
-                : row.original.status === "draft"
+                : row.original.status === InvoiceStatus.OVERDUE
+                ? "error"
+                : row.original.status === InvoiceStatus.DRAFT
                 ? "secondary"
-                : "info"
+                : "warning"
             }
             size="small"
             sx={{ fontWeight: "medium" }}
@@ -224,17 +216,15 @@ const Invoices = () => {
               <>
                 <Tooltip title="Delete invoice">
                   <IconButton
-                    disabled={
-                      row.original.status_transitions.finalized_at !== null
-                    }
                     onClick={() =>
                       handleDeleteClick(
-                        row.original.id,
-                        row.original.dbInvoiceObject.id
+                        row.original.id || "",
+                        row.original.id || ""
                       )
                     }
                     size="small"
                     color="error"
+                    disabled={!row.original.id}
                   >
                     <DeleteIcon fontSize="small" />
                   </IconButton>
@@ -244,7 +234,9 @@ const Invoices = () => {
                     onClick={() => handleSendInvoiceEmail(row.original, false)}
                     size="small"
                     color="primary"
-                    disabled={sendInvoiceEmailToClientIsLoading}
+                    disabled={
+                      sendInvoiceEmailToClientIsLoading || !row.original.id
+                    }
                   >
                     {sendInvoiceEmailToClientIsLoading ? (
                       <CircularProgress size={16} />
@@ -258,7 +250,9 @@ const Invoices = () => {
                     onClick={() => handleSendInvoiceEmail(row.original, true)}
                     size="small"
                     color="info"
-                    disabled={sendInvoiceEmailToClientIsLoading}
+                    disabled={
+                      sendInvoiceEmailToClientIsLoading || !row.original.id
+                    }
                   >
                     <BugReportIcon fontSize="small" />
                   </IconButton>
@@ -266,11 +260,14 @@ const Invoices = () => {
               </>
             )}
 
-            {row.original.status === "paid" && row.original.invoice_pdf ? (
+            {row.original.platformInvoiceData?.platformInvoiceId && (
               <Tooltip title="Download PDF">
                 <IconButton
                   onClick={() =>
-                    window.open(row.original.invoice_pdf, "_blank")
+                    window.open(
+                      `/api/invoices/${row.original.id}/pdf`,
+                      "_blank"
+                    )
                   }
                   size="small"
                   color="primary"
@@ -278,21 +275,20 @@ const Invoices = () => {
                   <DownloadIcon fontSize="small" />
                 </IconButton>
               </Tooltip>
-            ) : (
-              <></>
             )}
 
-            {isClient &&
-            (row.original.status !== "paid" ||
-              row.original.status! == "past_due") ? (
+            {isClient && row.original.status !== InvoiceStatus.PAID ? (
               <Tooltip title="Pay now">
                 <IconButton
-                  onClick={() => handlePayNow(row.original.id)}
+                  onClick={() =>
+                    row.original.id && handlePayNow(row.original.id)
+                  }
                   size="small"
                   color="primary"
                   disabled={
                     processingPayment === row.original.id ||
-                    payInvoiceNowIsLoading
+                    payInvoiceNowIsLoading ||
+                    !row.original.id
                   }
                 >
                   {processingPayment === row.original.id ? (
@@ -302,21 +298,19 @@ const Invoices = () => {
                   )}
                 </IconButton>
               </Tooltip>
-            ) : (
-              <></>
-            )}
+            ) : null}
           </Box>
         ),
         align: "right",
-        size: 100,
+        size: 180,
       },
     ],
     [
       isSuperAdmin,
+      isClient,
       processingPayment,
       payInvoiceNowIsLoading,
       sendInvoiceEmailToClientIsLoading,
-      selectedClient,
     ]
   );
 

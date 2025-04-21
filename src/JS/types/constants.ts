@@ -33,3 +33,18 @@ export const appTimezones = [
   "Australia/Sydney",
   "Pacific/Auckland",
 ];
+
+export const currencies = [
+  "USD",
+  "EUR",
+  "GBP",
+  "CAD",
+  "AUD",
+  "JPY",
+  "CNY",
+  "INR",
+  "BRL",
+  "CHF",
+  "SGD",
+  "MXN",
+];

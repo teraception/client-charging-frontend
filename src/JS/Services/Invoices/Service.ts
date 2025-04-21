@@ -3,17 +3,15 @@ import { WithValidityState } from "JS/types";
 import { BaseService } from "../BaseService";
 import {
   CreateInvoiceDto,
-  Invoice,
-  InvoicePayNow,
-  StripeCustomInvoiceSendDto,
-  StripeInvoiceObj,
-} from "JS/typingForNow/types";
+  CustomInvoiceSendDto,
+} from "JS/typingForNow/Invoice";
+import { Invoice, InvoiceDto } from "JS/typingForNow/Invoice";
 
 export class InvoiceService extends BaseService {
   getInvoicesByClientId(
     clientId: string
-  ): Promise<WithValidityState<AppResponse<StripeInvoiceObj[]>>> {
-    return this.doServerXHR<StripeInvoiceObj[]>({
+  ): Promise<WithValidityState<AppResponse<InvoiceDto[]>>> {
+    return this.doServerXHR<InvoiceDto[]>({
       url: this.activeRoute().server.api.invoice.getInvoiceByClientId(clientId),
       method: "GET",
     });
@@ -29,23 +27,37 @@ export class InvoiceService extends BaseService {
   }
 
   createInvoice(
-    data: CreateInvoiceDto
-  ): Promise<WithValidityState<AppResponse<StripeInvoiceObj>>> {
-    return this.doServerXHR<StripeInvoiceObj>({
+    data: CreateInvoiceDto,
+    files?: FileList
+  ): Promise<WithValidityState<AppResponse<InvoiceDto>>> {
+    const formData = new FormData();
+
+    // Convert entire data object to JSON string and append as "invoiceData"
+    formData.append("invoiceData", JSON.stringify(data));
+
+    // Append multiple files if present
+    if (files && files.length > 0) {
+      Array.from(files).forEach((file) => {
+        formData.append("files", file);
+      });
+    }
+
+    return this.doServerXHR<InvoiceDto>({
       url: this.activeRoute().server.api.invoice.create(),
       method: "POST",
-      data,
+      data: formData,
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
     });
   }
 
   deleteInvoice(
-    invoiceId: string,
     dbInvoiceId: string
   ): Promise<WithValidityState<AppResponse<boolean>>> {
     return this.doServerXHR<boolean>({
       url: this.activeRoute().server.api.invoice.delete(dbInvoiceId),
       method: "DELETE",
-      data: { invoiceId },
     });
   }
 
@@ -60,11 +72,12 @@ export class InvoiceService extends BaseService {
   }
 
   sendInvoiceEmailToClient(
-    invoiceId: string,
-    data: StripeCustomInvoiceSendDto
+    data: CustomInvoiceSendDto
   ): Promise<WithValidityState<AppResponse<boolean>>> {
+    const { testing, invoiceId } = data;
+
     return this.doServerXHR<boolean>({
-      url: data.testing
+      url: testing
         ? this.activeRoute().server.api.invoice.sendInvoiceEmailToClientTesting(
             invoiceId
           )
@@ -72,7 +85,7 @@ export class InvoiceService extends BaseService {
             invoiceId
           ),
       method: "POST",
-      data,
+      data: {},
     });
   }
 }

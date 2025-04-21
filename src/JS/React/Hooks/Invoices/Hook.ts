@@ -3,8 +3,8 @@ import { useAppServiceContext } from "JS/Routing/Context/ServiceContextProvider"
 import { useQueryKeys } from "../UseQueryKeys";
 import {
   CreateInvoiceDto,
-  StripeCustomInvoiceSendDto,
-} from "JS/typingForNow/types";
+  CustomInvoiceSendDto,
+} from "JS/typingForNow/Invoice";
 
 export const useGetInvoicesByClient = (clientId: string | null) => {
   const { invoiceService } = useAppServiceContext();
@@ -57,14 +57,20 @@ export const useCreateInvoice = () => {
     isPending: isLoading,
     data,
   } = useMutation({
-    mutationFn: async (data: CreateInvoiceDto) => {
-      const response = await invoiceService.createInvoice(data);
+    mutationFn: async ({
+      data,
+      files,
+    }: {
+      data: CreateInvoiceDto;
+      files?: FileList;
+    }) => {
+      const response = await invoiceService.createInvoice(data, files);
       return response;
     },
     onSuccess: (_, variables) => {
       // Invalidate invoices list for this client
       queryClient.invalidateQueries({
-        queryKey: invoice.listByClient(variables.clientId),
+        queryKey: invoice.listByClient(variables.data.clientId),
       });
     },
   });
@@ -86,20 +92,11 @@ export const useDeleteInvoice = () => {
     isPending: isLoading,
     data,
   } = useMutation({
-    mutationFn: async ({
-      invoiceId,
-      dbInvoiceId,
-    }: {
-      invoiceId: string;
-      dbInvoiceId: string;
-    }) => {
-      const response = await invoiceService.deleteInvoice(
-        invoiceId,
-        dbInvoiceId
-      );
+    mutationFn: async ({ dbInvoiceId }: { dbInvoiceId: string }) => {
+      const response = await invoiceService.deleteInvoice(dbInvoiceId);
       return response;
     },
-    onSuccess: (data) => {
+    onSuccess: () => {
       // Invalidate invoices list for this client
       queryClient.invalidateQueries({
         queryKey: invoice.all,
@@ -151,11 +148,8 @@ export const useSendInvoiceEmailToClient = () => {
     isPending: isLoading,
     data,
   } = useMutation({
-    mutationFn: async (data: StripeCustomInvoiceSendDto) => {
-      const response = await invoiceService.sendInvoiceEmailToClient(
-        data.invoiceId,
-        data
-      );
+    mutationFn: async (data: CustomInvoiceSendDto) => {
+      const response = await invoiceService.sendInvoiceEmailToClient(data);
       return response;
     },
     onSuccess: () => {},
