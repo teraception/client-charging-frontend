@@ -28,6 +28,7 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import SendIcon from "@mui/icons-material/Send";
 import PaymentIcon from "@mui/icons-material/Payment";
 import DownloadIcon from "@mui/icons-material/Download";
+import BugReportIcon from "@mui/icons-material/BugReport";
 import dayjs from "dayjs";
 import numeral from "numeral";
 import {
@@ -124,6 +125,42 @@ const Invoices = () => {
     setSnackbar({ ...snackbar, open: false });
   };
 
+  // Handle send invoice email
+  const handleSendInvoiceEmail = async (
+    invoiceData: any,
+    isTesting: boolean
+  ) => {
+    try {
+      await sendInvoiceEmailToClient({
+        invoiceId: invoiceData.id,
+        clientId: selectedClient?.id,
+        clientName: selectedClient?.name,
+        projectName: invoiceData.project?.name,
+        amount: Math.round(invoiceData.total / 100),
+        chargeDate: dayjs
+          .unix(invoiceData.dbInvoiceObject.chargeDate)
+          .format("YYYY-MM-DD"),
+        description: invoiceData.description,
+        invoiceSendDate: dayjs().format("YYYY-MM-DD"),
+        testing: isTesting,
+      });
+      setSnackbar({
+        open: true,
+        message: isTesting
+          ? "Test invoice email sent successfully"
+          : "Invoice email sent successfully",
+        severity: "success",
+      });
+    } catch (error) {
+      console.error("Error sending invoice email:", error);
+      setSnackbar({
+        open: true,
+        message: `Failed to send ${isTesting ? "test " : ""}invoice email`,
+        severity: "error",
+      });
+    }
+  };
+
   // Define table columns
   const columns = useMemo<MRT_ColumnDef<any>[]>(
     () => [
@@ -204,29 +241,7 @@ const Invoices = () => {
                 </Tooltip>
                 <Tooltip title="Email Invoice">
                   <IconButton
-                    onClick={async () => {
-                      try {
-                        await sendInvoiceEmailToClient({
-                          invoiceId: row.original.id,
-                          clientId: selectedClient?.id,
-                          clientName: selectedClient?.name,
-                          projectName: row.original.project?.name,
-                          amount: Math.round(row.original.total / 100),
-                          chargeDate: dayjs
-                            .unix(row.original.dbInvoiceObject.chargeDate)
-                            .format("YYYY-MM-DD"),
-                          description: row.original.description,
-                          invoiceSendDate: dayjs().format("YYYY-MM-DD"),
-                        });
-                        setSnackbar({
-                          open: true,
-                          message: "Invoice email sent successfully",
-                          severity: "success",
-                        });
-                      } catch (error) {
-                        console.error("Error sending invoice email:", error);
-                      }
-                    }}
+                    onClick={() => handleSendInvoiceEmail(row.original, false)}
                     size="small"
                     color="primary"
                     disabled={sendInvoiceEmailToClientIsLoading}
@@ -236,6 +251,16 @@ const Invoices = () => {
                     ) : (
                       <SendIcon fontSize="small" />
                     )}
+                  </IconButton>
+                </Tooltip>
+                <Tooltip title="Test Email Invoice">
+                  <IconButton
+                    onClick={() => handleSendInvoiceEmail(row.original, true)}
+                    size="small"
+                    color="info"
+                    disabled={sendInvoiceEmailToClientIsLoading}
+                  >
+                    <BugReportIcon fontSize="small" />
                   </IconButton>
                 </Tooltip>
               </>

@@ -64,9 +64,13 @@ export class InvoiceService extends BaseService {
     data: StripeCustomInvoiceSendDto
   ): Promise<WithValidityState<AppResponse<boolean>>> {
     return this.doServerXHR<boolean>({
-      url: this.activeRoute().server.api.invoice.sendInvoiceEmailToClient(
-        invoiceId
-      ),
+      url: data.testing
+        ? this.activeRoute().server.api.invoice.sendInvoiceEmailToClientTesting(
+            invoiceId
+          )
+        : this.activeRoute().server.api.invoice.sendInvoiceEmailToClient(
+            invoiceId
+          ),
       method: "POST",
       data,
     });

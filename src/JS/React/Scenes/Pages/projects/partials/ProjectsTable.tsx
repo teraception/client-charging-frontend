@@ -1,5 +1,13 @@
 import React, { useMemo } from "react";
-import { Box, Typography, IconButton, Tooltip, Button } from "@mui/material";
+import {
+  Box,
+  Typography,
+  IconButton,
+  Tooltip,
+  Button,
+  Chip,
+  Stack,
+} from "@mui/material";
 import {
   MaterialReactTable,
   useMaterialReactTable,
@@ -7,6 +15,11 @@ import {
 } from "material-react-table";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
+import CreditCardIcon from "@mui/icons-material/CreditCard";
+import AppleIcon from "@mui/icons-material/Apple";
+import AndroidIcon from "@mui/icons-material/Android";
+import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
+import LinkIcon from "@mui/icons-material/Link";
 import { Project } from "JS/typingForNow/types";
 
 interface ProjectsTableProps {
@@ -18,6 +31,7 @@ interface ProjectsTableProps {
   onDeleteProject: (projectId: string) => void;
   onOpenPaymentMethodsDialog: (projectId: string) => void;
   onCreateInvoice: (projectId: string) => void;
+  paymentMethods: any[];
 }
 
 export const ProjectsTable: React.FC<ProjectsTableProps> = ({
@@ -29,6 +43,7 @@ export const ProjectsTable: React.FC<ProjectsTableProps> = ({
   onDeleteProject,
   onOpenPaymentMethodsDialog,
   onCreateInvoice,
+  paymentMethods,
 }) => {
   // Define table columns
   const columns = useMemo<MRT_ColumnDef<Project>[]>(
@@ -49,10 +64,95 @@ export const ProjectsTable: React.FC<ProjectsTableProps> = ({
       {
         accessorKey: "paymentMethodIds",
         header: "Payment Methods",
-        Cell: ({ row }) => (
-          <span>{row.original.paymentMethodIds?.length || 0}</span>
-        ),
-        size: 150,
+        Cell: ({ row }) => {
+          const projectPaymentMethodIds = row.original.paymentMethodIds || [];
+
+          if (projectPaymentMethodIds.length === 0) {
+            return (
+              <Typography variant="body2" color="text.secondary">
+                None
+              </Typography>
+            );
+          }
+
+          return (
+            <Stack
+              direction="row"
+              spacing={1}
+              flexWrap="wrap"
+              sx={{ maxWidth: 280, gap: 1 }}
+            >
+              {projectPaymentMethodIds.map((pmId) => {
+                const paymentMethod = paymentMethods.find(
+                  (pm) => pm.id === pmId
+                );
+
+                // Determine payment method display based on type
+                let paymentLabel = "Unknown";
+                let chipColor = "default";
+                let chipIcon = <CreditCardIcon fontSize="small" />;
+
+                if (paymentMethod) {
+                  if (
+                    paymentMethod.type === "apple_pay" ||
+                    paymentMethod.card?.wallet?.type === "apple_pay"
+                  ) {
+                    paymentLabel = "Apple Pay";
+                    chipColor = "primary";
+                    chipIcon = <AppleIcon fontSize="small" />;
+                  } else if (
+                    paymentMethod.type === "google_pay" ||
+                    paymentMethod.card?.wallet?.type === "google_pay"
+                  ) {
+                    paymentLabel = "Google Pay";
+                    chipColor = "secondary";
+                    chipIcon = <AndroidIcon fontSize="small" />;
+                  } else if (
+                    paymentMethod.type === "link" ||
+                    paymentMethod.card?.wallet?.type === "link"
+                  ) {
+                    paymentLabel = "Link";
+                    chipColor = "info";
+                    chipIcon = <LinkIcon fontSize="small" />;
+                  } else if (paymentMethod.card?.wallet) {
+                    paymentLabel = `${
+                      paymentMethod.card.wallet.type || "Wallet"
+                    }`;
+                    chipColor = "success";
+                    chipIcon = <AccountBalanceWalletIcon fontSize="small" />;
+                  } else if (paymentMethod.card) {
+                    // Handle regular cards with simplified display
+                    paymentLabel = `${paymentMethod.card.brand || "Card"} *${
+                      paymentMethod.card.last4 || ""
+                    }`;
+                    chipColor = "default";
+                    chipIcon = <CreditCardIcon fontSize="small" />;
+                  }
+                }
+
+                return (
+                  <Chip
+                    key={pmId}
+                    label={paymentLabel}
+                    size="small"
+                    color={chipColor as any}
+                    icon={chipIcon}
+                    variant="filled"
+                    sx={{
+                      fontWeight: 500,
+                      pl: 0.5,
+                      borderRadius: "16px",
+                      "& .MuiChip-label": {
+                        padding: "0 8px 0 4px",
+                      },
+                    }}
+                  />
+                );
+              })}
+            </Stack>
+          );
+        },
+        size: 280,
       },
       {
         id: "actions",
@@ -113,6 +213,7 @@ export const ProjectsTable: React.FC<ProjectsTableProps> = ({
       onDeleteProject,
       onOpenPaymentMethodsDialog,
       onCreateInvoice,
+      paymentMethods,
     ]
   );
 

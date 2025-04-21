@@ -402,6 +402,7 @@ export const ProjectsComponent = () => {
         onDeleteProject={handleDeleteProject}
         onOpenPaymentMethodsDialog={handleOpenPaymentMethodsDialog}
         onCreateInvoice={handleOpenCreateInvoiceDialog}
+        paymentMethods={stripePaymentMethods || []}
       />
 
       {/* Dialog Components */}

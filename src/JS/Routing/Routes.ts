@@ -66,6 +66,8 @@ export const routesForContext = () => (params?: RouteParams) => {
           payNow: (invoiceId: string) => `${base}/invoice/${invoiceId}/pay-now`,
           sendInvoiceEmailToClient: (invoiceId: string) =>
             `${base}/invoice/${invoiceId}/send-invoice-to-client`,
+          sendInvoiceEmailToClientTesting: (invoiceId: string) =>
+            `${base}/invoice/${invoiceId}/send-invoice-to-client-testing`,
         },
       }))(`${config.baseApiUrl}`),
     },

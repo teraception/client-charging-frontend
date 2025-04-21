@@ -278,6 +278,8 @@ export interface StripeCustomInvoiceSendDto {
   description: string;
   invoiceSendDate: string;
   clientId: string;
+  // for frontend conditions purposes
+  testing?: boolean;
 }
 
 export interface InvoicePayNow {
