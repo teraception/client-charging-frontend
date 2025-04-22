@@ -271,7 +271,20 @@ export const CreateInvoiceDialog: React.FC<CreateInvoiceDialogProps> = ({
     onChange("chargeTime", formState.chargeTime);
     onChange("shortId", formState.shortId);
 
-    // Files are handled by the parent component through the invoice-file-input element
+    // Create a new DataTransfer object to synchronize files with the file input
+    if (formState.files.length > 0 && fileInputRef.current) {
+      try {
+        const dataTransfer = new DataTransfer();
+        formState.files.forEach((file) => {
+          dataTransfer.items.add(file);
+        });
+
+        // Update the file input's files property to match our local state
+        fileInputRef.current.files = dataTransfer.files;
+      } catch (err) {
+        console.error("Failed to sync files with file input:", err);
+      }
+    }
 
     // Call the parent's submit function
     await onCreateInvoice();
@@ -323,7 +336,7 @@ export const CreateInvoiceDialog: React.FC<CreateInvoiceDialogProps> = ({
         <DialogTitle>Create Invoice</DialogTitle>
         <DialogContent>
           <Grid container spacing={2} sx={{ mt: 1 }}>
-            <Grid item xs={12} md={4}>
+            <Grid item xs={12} md={3}>
               <TextField
                 autoFocus
                 margin="dense"
@@ -344,7 +357,7 @@ export const CreateInvoiceDialog: React.FC<CreateInvoiceDialogProps> = ({
                 }}
               />
             </Grid>
-            <Grid item xs={12} md={4}>
+            <Grid item xs={12} md={3}>
               <TextField
                 select
                 label="Currency"
@@ -361,7 +374,7 @@ export const CreateInvoiceDialog: React.FC<CreateInvoiceDialogProps> = ({
                 ))}
               </TextField>
             </Grid>
-            <Grid item xs={12} md={4}>
+            <Grid item xs={12} md={6}>
               <TextField
                 label="Short ID"
                 type="text"

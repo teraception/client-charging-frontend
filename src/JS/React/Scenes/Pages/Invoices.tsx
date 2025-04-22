@@ -301,23 +301,6 @@ const Invoices = () => {
               </>
             )}
 
-            {row.original.platformInvoiceData?.platformInvoiceId && (
-              <Tooltip title="Download PDF">
-                <IconButton
-                  onClick={() =>
-                    window.open(
-                      `/api/invoices/${row.original.id}/pdf`,
-                      "_blank"
-                    )
-                  }
-                  size="small"
-                  color="primary"
-                >
-                  <DownloadIcon fontSize="small" />
-                </IconButton>
-              </Tooltip>
-            )}
-
             {isClient && row.original.status !== InvoiceStatus.PAID ? (
               <Tooltip title="Pay now">
                 <IconButton

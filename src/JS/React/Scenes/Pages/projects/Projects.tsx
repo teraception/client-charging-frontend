@@ -31,6 +31,7 @@ import {
   ProjectsTable,
 } from "./partials";
 import { InvoiceStatus } from "JS/typingForNow/Invoice";
+import { v4 as uuidv4 } from "uuid";
 
 // Initialize dayjs plugins
 dayjs.extend(utc);
@@ -86,13 +87,13 @@ export const ProjectsComponent = () => {
   const [createInvoiceState, setCreateInvoiceState] = useState({
     invoiceAmount: "",
     invoiceDescription: "",
-    invoiceDate: new Date(new Date().setDate(new Date().getDate() + 1)),
+    invoiceDate: new Date(),
     invoiceTime: new Date(),
     invoiceTimezone: dayjs.tz.guess(),
     invoiceCurrency: "USD", // Default currency
     chargeDays: "1", // Default to 1 day
     chargeTime: new Date(), // Default to current time
-    shortId: "", // Add shortId field
+    shortId: uuidv4(), // Add shortId field
     amountError: "",
     isLoading: false,
   });
@@ -272,7 +273,7 @@ export const ProjectsComponent = () => {
       invoiceCurrency: "USD", // Default currency
       chargeDays: "1", // Default to 1 day
       chargeTime: new Date(), // Default to current time
-      shortId: "", // Initialize shortId as empty
+      shortId: uuidv4(), // Initialize shortId as empty
       amountError: "",
       isLoading: false,
     });
