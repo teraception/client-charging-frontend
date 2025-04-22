@@ -21,6 +21,7 @@ import AndroidIcon from "@mui/icons-material/Android";
 import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
 import LinkIcon from "@mui/icons-material/Link";
 import { Project } from "JS/typingForNow/types";
+import { getPaymentMethodDisplay } from "JS/typingForNow/PaymentMethod";
 
 interface ProjectsTableProps {
   projects: Project[];
@@ -45,6 +46,26 @@ export const ProjectsTable: React.FC<ProjectsTableProps> = ({
   onCreateInvoice,
   paymentMethods,
 }) => {
+  // Helper function to get the appropriate icon based on the iconType
+  const getIconForPaymentMethod = (iconType: string) => {
+    switch (iconType) {
+      case "card":
+        return <CreditCardIcon fontSize="small" />;
+      case "bank":
+        return <AccountBalanceWalletIcon fontSize="small" />;
+      case "wallet":
+        return <AccountBalanceWalletIcon fontSize="small" />;
+      case "apple":
+        return <AppleIcon fontSize="small" />;
+      case "google":
+        return <AndroidIcon fontSize="small" />;
+      case "link":
+        return <LinkIcon fontSize="small" />;
+      default:
+        return <CreditCardIcon fontSize="small" />;
+    }
+  };
+
   // Define table columns
   const columns = useMemo<MRT_ColumnDef<Project>[]>(
     () => [
@@ -87,56 +108,38 @@ export const ProjectsTable: React.FC<ProjectsTableProps> = ({
                   (pm) => pm.id === pmId
                 );
 
-                // Determine payment method display based on type
-                let paymentLabel = "Unknown";
-                let chipColor = "default";
-                let chipIcon = <CreditCardIcon fontSize="small" />;
-
-                if (paymentMethod) {
-                  if (
-                    paymentMethod.type === "apple_pay" ||
-                    paymentMethod.card?.wallet?.type === "apple_pay"
-                  ) {
-                    paymentLabel = "Apple Pay";
-                    chipColor = "primary";
-                    chipIcon = <AppleIcon fontSize="small" />;
-                  } else if (
-                    paymentMethod.type === "google_pay" ||
-                    paymentMethod.card?.wallet?.type === "google_pay"
-                  ) {
-                    paymentLabel = "Google Pay";
-                    chipColor = "secondary";
-                    chipIcon = <AndroidIcon fontSize="small" />;
-                  } else if (
-                    paymentMethod.type === "link" ||
-                    paymentMethod.card?.wallet?.type === "link"
-                  ) {
-                    paymentLabel = "Link";
-                    chipColor = "info";
-                    chipIcon = <LinkIcon fontSize="small" />;
-                  } else if (paymentMethod.card?.wallet) {
-                    paymentLabel = `${
-                      paymentMethod.card.wallet.type || "Wallet"
-                    }`;
-                    chipColor = "success";
-                    chipIcon = <AccountBalanceWalletIcon fontSize="small" />;
-                  } else if (paymentMethod.card) {
-                    // Handle regular cards with simplified display
-                    paymentLabel = `${paymentMethod.card.brand || "Card"} *${
-                      paymentMethod.card.last4 || ""
-                    }`;
-                    chipColor = "default";
-                    chipIcon = <CreditCardIcon fontSize="small" />;
-                  }
+                if (!paymentMethod) {
+                  return (
+                    <Chip
+                      key={pmId}
+                      label="Unknown"
+                      size="small"
+                      color="default"
+                      icon={<CreditCardIcon fontSize="small" />}
+                      variant="filled"
+                      sx={{
+                        fontWeight: 500,
+                        pl: 0.5,
+                        borderRadius: "16px",
+                        "& .MuiChip-label": {
+                          padding: "0 8px 0 4px",
+                        },
+                      }}
+                    />
+                  );
                 }
+
+                const { label, color, iconType } =
+                  getPaymentMethodDisplay(paymentMethod);
+                const icon = getIconForPaymentMethod(iconType);
 
                 return (
                   <Chip
                     key={pmId}
-                    label={paymentLabel}
+                    label={label}
                     size="small"
-                    color={chipColor as any}
-                    icon={chipIcon}
+                    color={color}
+                    icon={icon}
                     variant="filled"
                     sx={{
                       fontWeight: 500,

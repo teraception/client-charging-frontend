@@ -8,13 +8,28 @@ import {
   Button,
   Box,
   CircularProgress,
+  Chip,
 } from "@mui/material";
 import { SelectComponent } from "JS/React/Components/SelectComponent";
+import {
+  getPaymentMethodDisplay,
+  getPaymentMethodLabel,
+} from "JS/typingForNow/PaymentMethod";
+import CreditCardIcon from "@mui/icons-material/CreditCard";
+import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
+import AppleIcon from "@mui/icons-material/Apple";
+import AndroidIcon from "@mui/icons-material/Android";
+import LinkIcon from "@mui/icons-material/Link";
 
 interface PaymentMethod {
   id: string;
+  type?: string;
   card?: {
     brand?: string;
+    last4?: string;
+  };
+  us_bank_account?: {
+    bank_name?: string;
     last4?: string;
   };
 }
@@ -45,6 +60,26 @@ export const PaymentMethodsDialog: React.FC<PaymentMethodsDialogProps> = ({
   onUpdatePaymentMethods,
 }) => {
   const { selectedPaymentMethodIds, isLoading, paymentMethodsLoading } = state;
+
+  // Helper function to get the appropriate icon based on the iconType
+  const getIconForPaymentMethod = (iconType: string) => {
+    switch (iconType) {
+      case "card":
+        return <CreditCardIcon />;
+      case "bank":
+        return <AccountBalanceWalletIcon />;
+      case "wallet":
+        return <AccountBalanceWalletIcon />;
+      case "apple":
+        return <AppleIcon />;
+      case "google":
+        return <AndroidIcon />;
+      case "link":
+        return <LinkIcon />;
+      default:
+        return <CreditCardIcon />;
+    }
+  };
 
   return (
     <Dialog
@@ -97,8 +132,7 @@ export const PaymentMethodsDialog: React.FC<PaymentMethodsDialogProps> = ({
                     const method = paymentMethods.find((m) => m.id === id);
                     return method ? (
                       <Typography key={id} variant="body2">
-                        {method.card?.brand?.toUpperCase() || "CARD"} ****{" "}
-                        {method.card?.last4 || "****"}
+                        {getPaymentMethodLabel(method as any)}
                       </Typography>
                     ) : (
                       <Typography
@@ -117,12 +151,16 @@ export const PaymentMethodsDialog: React.FC<PaymentMethodsDialogProps> = ({
             <SelectComponent
               title="Payment Methods"
               placeholder="Select payment methods"
-              options={(paymentMethods || []).map((method) => ({
-                value: method.id,
-                label: `${method.card?.brand?.toUpperCase() || "CARD"} **** ${
-                  method.card?.last4 || "****"
-                }`,
-              }))}
+              options={(paymentMethods || []).map((method) => {
+                const { label, color, iconType } = getPaymentMethodDisplay(
+                  method as any
+                );
+                // We're just using the label for the dropdown options
+                return {
+                  value: method.id,
+                  label: label,
+                };
+              })}
               selectedValues={selectedPaymentMethodIds}
               onChange={(values) => {
                 // If single value returned (not array), wrap in array

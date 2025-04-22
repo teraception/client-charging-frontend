@@ -318,6 +318,37 @@ export const CreateInvoiceDialog: React.FC<CreateInvoiceDialogProps> = ({
     onChange("shortId", "");
   };
 
+  // Handle dialog close with state reset
+  const handleDialogClose = () => {
+    // Reset local state
+    setFormState({
+      amount: "",
+      description: "",
+      amountError: "",
+      date: null,
+      time: null,
+      timezone: formState.timezone, // Keep timezone as user preference
+      currency: formState.currency, // Keep currency as user preference
+      chargeDays: "",
+      chargeTime: null,
+      shortId: "",
+      files: [],
+    });
+
+    // Reset parent state
+    onChange("invoiceAmount", "");
+    onChange("invoiceDescription", "");
+    onChange("amountError", "");
+    onChange("invoiceDate", null);
+    onChange("invoiceTime", null);
+    onChange("chargeDays", "");
+    onChange("chargeTime", null);
+    onChange("shortId", "");
+
+    // Call the parent's onClose
+    onClose();
+  };
+
   // Extract loading state from parent
   const { isLoading } = state;
 
@@ -325,7 +356,7 @@ export const CreateInvoiceDialog: React.FC<CreateInvoiceDialogProps> = ({
     <LocalizationProvider dateAdapter={AdapterDateFns}>
       <Dialog
         open={open}
-        onClose={onClose}
+        onClose={handleDialogClose}
         maxWidth="md"
         PaperProps={{
           sx: {
@@ -546,7 +577,7 @@ export const CreateInvoiceDialog: React.FC<CreateInvoiceDialogProps> = ({
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={onClose}>Cancel</Button>
+          <Button onClick={handleDialogClose}>Cancel</Button>
           <Button
             onClick={handleSubmit}
             variant="contained"
