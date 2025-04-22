@@ -74,7 +74,7 @@ export class InvoiceService extends BaseService {
   sendInvoiceEmailToClient(
     data: CustomInvoiceSendDto
   ): Promise<WithValidityState<AppResponse<boolean>>> {
-    const { testing, invoiceId } = data;
+    const { testing, invoiceId, email } = data;
 
     return this.doServerXHR<boolean>({
       url: testing
@@ -85,7 +85,7 @@ export class InvoiceService extends BaseService {
             invoiceId
           ),
       method: "POST",
-      data: {},
+      data: testing ? { email } : {},
     });
   }
 }

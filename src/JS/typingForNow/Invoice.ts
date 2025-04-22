@@ -49,7 +49,7 @@ export interface InvoiceDto extends Invoice {
 
 export interface CustomInvoiceSendDto {
   invoiceId: string;
-
+  email?: string;
   // for frontend conditions purposes
   testing?: boolean;
 }

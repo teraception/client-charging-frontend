@@ -14,6 +14,7 @@ import {
   Tooltip,
   Snackbar,
   Alert,
+  TextField,
 } from "@mui/material";
 import { useSelectedClient } from "JS/React/Context/SelectedClientContext";
 import { useAccessHandler } from "JS/React/Hooks/AccessHandler";
@@ -24,9 +25,7 @@ import {
   useSendInvoiceEmailToClient,
 } from "JS/React/Hooks/Invoices/Hook";
 import DeleteIcon from "@mui/icons-material/Delete";
-import SendIcon from "@mui/icons-material/Send";
 import PaymentIcon from "@mui/icons-material/Payment";
-import DownloadIcon from "@mui/icons-material/Download";
 import BugReportIcon from "@mui/icons-material/BugReport";
 import dayjs from "dayjs";
 import numeral from "numeral";
@@ -44,6 +43,9 @@ const Invoices = () => {
   const [openPayConfirmation, setOpenPayConfirmation] = useState(false);
   const [openSendEmailConfirmation, setOpenSendEmailConfirmation] =
     useState(false);
+  const [openTestEmailDialog, setOpenTestEmailDialog] = useState(false);
+  const [testEmailAddress, setTestEmailAddress] = useState("");
+  const [emailError, setEmailError] = useState("");
   const [isSendEmailTest, setIsSendEmailTest] = useState(false);
   const [activeInvoiceData, setActiveInvoiceData] = useState<{
     invoiceId: string;
@@ -105,7 +107,12 @@ const Invoices = () => {
       invoiceDto: invoiceData,
     });
     setIsSendEmailTest(isTesting);
-    setOpenSendEmailConfirmation(true);
+
+    if (isTesting) {
+      setOpenTestEmailDialog(true);
+    } else {
+      setOpenSendEmailConfirmation(true);
+    }
   };
 
   // Handle pay now
@@ -160,29 +167,65 @@ const Invoices = () => {
     try {
       if (!activeInvoiceData.invoiceId) return;
 
-      await sendInvoiceEmailToClient({
+      const response = await sendInvoiceEmailToClient({
         invoiceId: activeInvoiceData.invoiceId,
         testing: isSendEmailTest,
+        email: isSendEmailTest ? testEmailAddress : undefined,
       });
 
       setOpenSendEmailConfirmation(false);
-      setSnackbar({
-        open: true,
-        message: isSendEmailTest
-          ? "Test invoice email sent successfully"
-          : "Invoice email sent successfully",
-        severity: "success",
-      });
+      setOpenTestEmailDialog(false);
+      setTestEmailAddress("");
+      if (response) {
+        setSnackbar({
+          open: true,
+          message: isSendEmailTest
+            ? `Test invoice email sent successfully to ${testEmailAddress}`
+            : "Invoice email sent successfully",
+          severity: "success",
+        });
+      }
     } catch (error) {
       console.error("Error sending invoice email:", error);
-      setSnackbar({
-        open: true,
-        message: `Failed to send ${
-          isSendEmailTest ? "test " : ""
-        }invoice email`,
-        severity: "error",
-      });
+      // setSnackbar({
+      //   open: true,
+      //   message: `Failed to send ${
+      //     isSendEmailTest ? "test " : ""
+      //   }invoice email`,
+      //   severity: "error",
+      // });
     }
+  };
+
+  // Validate email format
+  const validateEmail = (email: string): boolean => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
+  // Handle email input change
+  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setTestEmailAddress(value);
+
+    if (!value) {
+      setEmailError("Email address is required");
+    } else if (!validateEmail(value)) {
+      setEmailError("Please enter a valid email address");
+    } else {
+      setEmailError("");
+    }
+  };
+
+  // Handle test email dialog confirmation
+  const handleTestEmailConfirm = () => {
+    if (!validateEmail(testEmailAddress)) {
+      setEmailError("Please enter a valid email address");
+      return;
+    }
+
+    setOpenTestEmailDialog(false);
+    setOpenSendEmailConfirmation(true);
   };
 
   // Handle send invoice email (original function, now redirects to dialog)
@@ -270,22 +313,7 @@ const Invoices = () => {
                     <DeleteIcon fontSize="small" />
                   </IconButton>
                 </Tooltip>
-                <Tooltip title="Email Invoice">
-                  <IconButton
-                    onClick={() => handleSendInvoiceEmail(row.original, false)}
-                    size="small"
-                    color="primary"
-                    disabled={
-                      sendInvoiceEmailToClientIsLoading || !row.original.id
-                    }
-                  >
-                    {sendInvoiceEmailToClientIsLoading ? (
-                      <CircularProgress size={16} />
-                    ) : (
-                      <SendIcon fontSize="small" />
-                    )}
-                  </IconButton>
-                </Tooltip>
+
                 <Tooltip title="Test Email Invoice">
                   <IconButton
                     onClick={() => handleSendInvoiceEmail(row.original, true)}
@@ -450,8 +478,10 @@ const Invoices = () => {
         <DialogContent>
           <Typography>
             Are you sure you want to{" "}
-            {isSendEmailTest ? "send a test email" : "send the invoice email"}{" "}
-            to the client?
+            {isSendEmailTest
+              ? `send a test email to ${testEmailAddress}`
+              : "send the invoice email"}{" "}
+            {isSendEmailTest ? "" : "to the client"}?
           </Typography>
         </DialogContent>
         <DialogActions>
@@ -462,7 +492,10 @@ const Invoices = () => {
             onClick={handleConfirmSendEmail}
             variant="contained"
             color="primary"
-            disabled={sendInvoiceEmailToClientIsLoading}
+            disabled={
+              sendInvoiceEmailToClientIsLoading ||
+              (isSendEmailTest && !testEmailAddress)
+            }
           >
             {sendInvoiceEmailToClientIsLoading ? (
               <CircularProgress size={24} />
@@ -471,6 +504,43 @@ const Invoices = () => {
             ) : (
               "Send Email"
             )}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Test Email Dialog */}
+      <Dialog
+        open={openTestEmailDialog}
+        onClose={() => setOpenTestEmailDialog(false)}
+      >
+        <DialogTitle>Enter Test Email Address</DialogTitle>
+        <DialogContent>
+          <Typography sx={{ mb: 2 }}>
+            Please enter the email address where you'd like to send the test
+            invoice email:
+          </Typography>
+          <TextField
+            autoFocus
+            label="Email Address"
+            type="email"
+            fullWidth
+            variant="outlined"
+            value={testEmailAddress}
+            onChange={handleEmailChange}
+            placeholder="example@email.com"
+            error={!!emailError}
+            helperText={emailError}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenTestEmailDialog(false)}>Cancel</Button>
+          <Button
+            onClick={handleTestEmailConfirm}
+            variant="contained"
+            color="primary"
+            disabled={!testEmailAddress || !!emailError}
+          >
+            Continue
           </Button>
         </DialogActions>
       </Dialog>
