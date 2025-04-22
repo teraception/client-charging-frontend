@@ -16,19 +16,13 @@ import {
 import {
   LocalizationProvider,
   DatePicker,
-  TimePicker,
+  MobileTimePicker,
 } from "@mui/x-date-pickers";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { appTimezones, currencies } from "JS/types/constants";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import AttachFileIcon from "@mui/icons-material/AttachFile";
 import CloseIcon from "@mui/icons-material/Close";
-
-// Helper function to convert dollars to cents
-const dollarsToCents = (dollars: string | number): number => {
-  const amount = typeof dollars === "string" ? parseFloat(dollars) : dollars;
-  return Math.round(amount * 100);
-};
 
 // Helper function to convert Date to epoch seconds (not milliseconds)
 const dateToEpochSeconds = (date: Date | null): number => {
@@ -268,9 +262,6 @@ export const CreateInvoiceDialog: React.FC<CreateInvoiceDialogProps> = ({
       chargeDayTime = dateToEpochSeconds(chargeDate);
     }
 
-    // Convert dollar amount to cents
-    const amountInCents = dollarsToCents(formState.amount);
-
     // Sync all fields one last time
     onChange("invoiceAmount", formState.amount);
     onChange("invoiceDescription", formState.description);
@@ -406,7 +397,7 @@ export const CreateInvoiceDialog: React.FC<CreateInvoiceDialogProps> = ({
                 label="Schedule Date"
                 value={formState.date}
                 onChange={handleDateChange}
-                minDate={new Date(new Date().setDate(new Date().getDate() + 1))}
+                minDate={new Date()}
                 slotProps={{
                   textField: {
                     fullWidth: true,
@@ -416,10 +407,12 @@ export const CreateInvoiceDialog: React.FC<CreateInvoiceDialogProps> = ({
               />
             </Grid>
             <Grid item xs={12} md={4}>
-              <TimePicker
+              <MobileTimePicker
                 label="Schedule Time"
                 value={formState.time}
                 onChange={handleTimeChange}
+                views={["hours", "minutes"]}
+                ampm
                 slotProps={{
                   textField: {
                     fullWidth: true,
@@ -462,10 +455,12 @@ export const CreateInvoiceDialog: React.FC<CreateInvoiceDialogProps> = ({
               />
             </Grid>
             <Grid item xs={12} md={6}>
-              <TimePicker
+              <MobileTimePicker
                 label="Charge Time"
                 value={formState.chargeTime}
                 onChange={handleChargeTimeChange}
+                views={["hours", "minutes"]}
+                ampm
                 slotProps={{
                   textField: {
                     fullWidth: true,
@@ -551,6 +546,7 @@ export const CreateInvoiceDialog: React.FC<CreateInvoiceDialogProps> = ({
               !formState.currency ||
               !formState.chargeDays ||
               !formState.chargeTime ||
+              !formState.shortId ||
               isLoading
             }
           >

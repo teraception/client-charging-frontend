@@ -41,9 +41,14 @@ const Invoices = () => {
   const { selectedClient } = useSelectedClient();
   const { isSuperAdmin, isClient } = useAccessHandler();
   const [openDeleteConfirmation, setOpenDeleteConfirmation] = useState(false);
+  const [openPayConfirmation, setOpenPayConfirmation] = useState(false);
+  const [openSendEmailConfirmation, setOpenSendEmailConfirmation] =
+    useState(false);
+  const [isSendEmailTest, setIsSendEmailTest] = useState(false);
   const [activeInvoiceData, setActiveInvoiceData] = useState<{
     invoiceId: string;
     dbInvoiceId: string;
+    invoiceDto?: InvoiceDto;
   }>({
     invoiceId: "",
     dbInvoiceId: "",
@@ -80,12 +85,38 @@ const Invoices = () => {
     setOpenDeleteConfirmation(true);
   };
 
+  // Handle pay now click
+  const handlePayNowClick = (invoiceId: string) => {
+    setActiveInvoiceData({
+      invoiceId,
+      dbInvoiceId: invoiceId,
+    });
+    setOpenPayConfirmation(true);
+  };
+
+  // Handle send email click
+  const handleSendEmailClick = (
+    invoiceData: InvoiceDto,
+    isTesting: boolean
+  ) => {
+    setActiveInvoiceData({
+      invoiceId: invoiceData.id || "",
+      dbInvoiceId: invoiceData.id || "",
+      invoiceDto: invoiceData,
+    });
+    setIsSendEmailTest(isTesting);
+    setOpenSendEmailConfirmation(true);
+  };
+
   // Handle pay now
-  const handlePayNow = async (invoiceId: string) => {
+  const handleConfirmPay = async () => {
+    if (!activeInvoiceData.invoiceId) return;
+
     try {
-      setProcessingPayment(invoiceId);
-      await payInvoiceNow(invoiceId);
+      setProcessingPayment(activeInvoiceData.invoiceId);
+      await payInvoiceNow(activeInvoiceData.invoiceId);
       refetchInvoices();
+      setOpenPayConfirmation(false);
     } catch (error) {
       console.error("Error processing payment:", error);
     } finally {
@@ -124,21 +155,20 @@ const Invoices = () => {
     setSnackbar({ ...snackbar, open: false });
   };
 
-  // Handle send invoice email
-  const handleSendInvoiceEmail = async (
-    invoiceData: InvoiceDto,
-    isTesting: boolean
-  ) => {
+  // Handle confirm send invoice email
+  const handleConfirmSendEmail = async () => {
     try {
-      if (!invoiceData.id) return;
+      if (!activeInvoiceData.invoiceId) return;
 
       await sendInvoiceEmailToClient({
-        invoiceId: invoiceData.id,
-        testing: isTesting,
+        invoiceId: activeInvoiceData.invoiceId,
+        testing: isSendEmailTest,
       });
+
+      setOpenSendEmailConfirmation(false);
       setSnackbar({
         open: true,
-        message: isTesting
+        message: isSendEmailTest
           ? "Test invoice email sent successfully"
           : "Invoice email sent successfully",
         severity: "success",
@@ -147,10 +177,20 @@ const Invoices = () => {
       console.error("Error sending invoice email:", error);
       setSnackbar({
         open: true,
-        message: `Failed to send ${isTesting ? "test " : ""}invoice email`,
+        message: `Failed to send ${
+          isSendEmailTest ? "test " : ""
+        }invoice email`,
         severity: "error",
       });
     }
+  };
+
+  // Handle send invoice email (original function, now redirects to dialog)
+  const handleSendInvoiceEmail = async (
+    invoiceData: InvoiceDto,
+    isTesting: boolean
+  ) => {
+    handleSendEmailClick(invoiceData, isTesting);
   };
 
   // Define table columns
@@ -165,7 +205,8 @@ const Invoices = () => {
       {
         accessorKey: "amount",
         header: "Total Amount",
-        Cell: ({ row }) => formatAmount(row.original.amount),
+        // converting cents to dollars
+        Cell: ({ row }) => formatAmount(row.original.amount / 100),
         size: 150,
       },
       {
@@ -281,7 +322,7 @@ const Invoices = () => {
               <Tooltip title="Pay now">
                 <IconButton
                   onClick={() =>
-                    row.original.id && handlePayNow(row.original.id)
+                    row.original.id && handlePayNowClick(row.original.id)
                   }
                   size="small"
                   color="primary"
@@ -385,6 +426,68 @@ const Invoices = () => {
             disabled={deleteInvoiceIsLoading}
           >
             {deleteInvoiceIsLoading ? <CircularProgress size={24} /> : "Delete"}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Pay Now Confirmation Dialog */}
+      <Dialog
+        open={openPayConfirmation}
+        onClose={() => setOpenPayConfirmation(false)}
+      >
+        <DialogTitle>Confirm Payment</DialogTitle>
+        <DialogContent>
+          <Typography>
+            Are you sure you want to process this payment now?
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenPayConfirmation(false)}>Cancel</Button>
+          <Button
+            onClick={handleConfirmPay}
+            variant="contained"
+            color="primary"
+            disabled={payInvoiceNowIsLoading}
+          >
+            {payInvoiceNowIsLoading ? (
+              <CircularProgress size={24} />
+            ) : (
+              "Pay Now"
+            )}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Send Email Confirmation Dialog */}
+      <Dialog
+        open={openSendEmailConfirmation}
+        onClose={() => setOpenSendEmailConfirmation(false)}
+      >
+        <DialogTitle>Confirm Send Email</DialogTitle>
+        <DialogContent>
+          <Typography>
+            Are you sure you want to{" "}
+            {isSendEmailTest ? "send a test email" : "send the invoice email"}{" "}
+            to the client?
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenSendEmailConfirmation(false)}>
+            Cancel
+          </Button>
+          <Button
+            onClick={handleConfirmSendEmail}
+            variant="contained"
+            color="primary"
+            disabled={sendInvoiceEmailToClientIsLoading}
+          >
+            {sendInvoiceEmailToClientIsLoading ? (
+              <CircularProgress size={24} />
+            ) : isSendEmailTest ? (
+              "Send Test Email"
+            ) : (
+              "Send Email"
+            )}
           </Button>
         </DialogActions>
       </Dialog>

@@ -266,7 +266,7 @@ export const ProjectsComponent = () => {
     setCreateInvoiceState({
       invoiceAmount: "",
       invoiceDescription: "",
-      invoiceDate: new Date(new Date().setDate(new Date().getDate() + 1)),
+      invoiceDate: new Date(),
       invoiceTime: new Date(),
       invoiceTimezone: dayjs.tz.guess(),
       invoiceCurrency: "USD", // Default currency

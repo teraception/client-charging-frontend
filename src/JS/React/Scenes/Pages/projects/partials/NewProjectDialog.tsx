@@ -27,7 +27,16 @@ export const NewProjectDialog: React.FC<NewProjectDialogProps> = ({
   isLoading,
 }) => {
   return (
-    <Dialog open={open} onClose={onClose}>
+    <Dialog
+      open={open}
+      onClose={onClose}
+      PaperProps={{
+        sx: {
+          maxWidth: "500px",
+          width: "500px",
+        },
+      }}
+    >
       <DialogTitle>Create New Project</DialogTitle>
       <DialogContent>
         <TextField
