@@ -143,6 +143,15 @@ const InvoicePreviewDialog: React.FC<InvoicePreviewDialogProps> = ({
                 <Typography variant="body2">{formattedAmount}</Typography>
               </Box>
 
+              {invoice.description && (
+                <Box sx={{ mt: 2 }}>
+                  <Typography variant="body2" fontWeight="bold">
+                    Description:
+                  </Typography>
+                  <Typography variant="body2">{invoice.description}</Typography>
+                </Box>
+              )}
+
               <Divider sx={{ my: 2 }} />
 
               <Stack spacing={1}>
@@ -180,15 +189,6 @@ const InvoicePreviewDialog: React.FC<InvoicePreviewDialogProps> = ({
                   </Typography>
                 </Box>
               </Stack>
-
-              {invoice.description && (
-                <Box sx={{ mt: 2 }}>
-                  <Typography variant="body2" fontWeight="bold">
-                    Description:
-                  </Typography>
-                  <Typography variant="body2">{invoice.description}</Typography>
-                </Box>
-              )}
 
               <Box
                 sx={{
