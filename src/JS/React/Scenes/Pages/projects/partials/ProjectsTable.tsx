@@ -32,6 +32,7 @@ interface ProjectsTableProps {
   onDeleteProject: (projectId: string) => void;
   onOpenPaymentMethodsDialog: (projectId: string) => void;
   onCreateInvoice: (projectId: string) => void;
+  onAddPaymentMethod: (projectId: string) => void;
   paymentMethods: any[];
 }
 
@@ -44,6 +45,7 @@ export const ProjectsTable: React.FC<ProjectsTableProps> = ({
   onDeleteProject,
   onOpenPaymentMethodsDialog,
   onCreateInvoice,
+  onAddPaymentMethod,
   paymentMethods,
 }) => {
   // Helper function to get the appropriate icon based on the iconType
@@ -171,6 +173,14 @@ export const ProjectsTable: React.FC<ProjectsTableProps> = ({
                 >
                   Update Payment Methods
                 </Button>
+                <Button
+                  variant="contained"
+                  size="small"
+                  color="primary"
+                  onClick={() => onAddPaymentMethod(row.original.id!)}
+                >
+                  Add Payment Method
+                </Button>
               </>
             )}
             {isSuperAdmin && (
@@ -216,6 +226,7 @@ export const ProjectsTable: React.FC<ProjectsTableProps> = ({
       onDeleteProject,
       onOpenPaymentMethodsDialog,
       onCreateInvoice,
+      onAddPaymentMethod,
       paymentMethods,
     ]
   );

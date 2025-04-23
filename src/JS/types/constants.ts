@@ -35,3 +35,7 @@ export const appTimezones = [
 ];
 
 export const currencies = ["USD"];
+
+export const localStorageKeys = {
+  paymentMethodForProject: "paymentMethodForProject",
+};

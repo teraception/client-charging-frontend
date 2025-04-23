@@ -9,13 +9,22 @@ import { useRouting } from "../Hooks/Routes";
 import { useParams } from "react-router";
 import { useCreatePaymentMethod } from "../Hooks/Payment-methods/Hook";
 import { config } from "JS/Config";
+import { CreatePaymentMethodDto } from "JS/typingForNow/types";
+import { localStorageKeys } from "JS/types/constants";
 
 const dashboardUrl = config.dashboardUrl;
 
-export const PaymentSetupForm = () => {
+interface Props {
+  forProject: boolean;
+  payload: CreatePaymentMethodDto | null;
+}
+
+export const PaymentSetupForm = (props: Props) => {
   const stripe = useStripe();
   const elements = useElements();
-  const { id: routeClientId, projectId } = useParams();
+  const { id: routeClientId } = useParams();
+
+  const { forProject, payload } = props;
 
   const {
     createPaymentMethod,
@@ -56,16 +65,25 @@ export const PaymentSetupForm = () => {
 
     // Create the SetupIntent and obtain clientSecret
     const res = await createPaymentMethod({
-      clientId: routeClientId,
-      projectId: projectId,
+      clientId: forProject ? payload?.clientId : routeClientId,
+      projectId: forProject ? payload?.projectId : undefined,
     });
 
     // Confirm the SetupIntent using the details collected by the Payment Element
+
+    if (forProject) {
+      localStorage.setItem(
+        localStorageKeys.paymentMethodForProject,
+        payload.projectId
+      );
+    }
     const { error } = await stripe.confirmSetup({
       elements: elements as StripeElements,
       clientSecret: res.data.clientSecret,
       confirmParams: {
-        return_url: `${dashboardUrl}/clients/${routeClientId}/payment-methods`,
+        return_url: forProject
+          ? `${dashboardUrl}/clients/${routeClientId}/projects`
+          : `${dashboardUrl}/clients/${routeClientId}/payment-methods`,
       },
     });
 

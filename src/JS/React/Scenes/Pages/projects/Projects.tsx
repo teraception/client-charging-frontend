@@ -29,9 +29,11 @@ import {
   PaymentMethodsDialog,
   CreateInvoiceDialog,
   ProjectsTable,
+  AddPaymentMethodModal,
 } from "./partials";
 import { InvoiceStatus } from "JS/typingForNow/Invoice";
 import { v4 as uuidv4 } from "uuid";
+import { localStorageKeys } from "JS/types/constants";
 
 // Initialize dayjs plugins
 dayjs.extend(utc);
@@ -57,6 +59,10 @@ export const ProjectsComponent = () => {
   const [openPaymentMethodsDialog, setOpenPaymentMethodsDialog] =
     useState(false);
   const [openCreateInvoiceDialog, setOpenCreateInvoiceDialog] = useState(false);
+  const [openAddPaymentMethodModal, setOpenAddPaymentMethodModal] = useState({
+    open: false,
+    projectId: null,
+  });
 
   // Project state
   const [newProjectName, setNewProjectName] = useState("");
@@ -99,9 +105,8 @@ export const ProjectsComponent = () => {
   });
 
   // API hooks
-  const { projectsData, projectsIsLoading } = useGetProjectsByClient(
-    selectedClient?.id || null
-  );
+  const { projectsData, projectsIsLoading, refetchProjects } =
+    useGetProjectsByClient(selectedClient?.id || null);
 
   const { projectData, projectIsLoading } = useGetProjectDetails(
     paymentMethodProjectId
@@ -116,6 +121,23 @@ export const ProjectsComponent = () => {
   const { updatePaymentMethodsForProject, updatePaymentMethodsIsLoading } =
     useUpdatePaymentMethodsForProject();
   const { createInvoice, createInvoiceIsLoading } = useCreateInvoice();
+
+  useEffect(() => {
+    // assigning card to project
+    // assuming that the first card is the  new one
+
+    const paymentMethodForProject = localStorage.getItem(
+      localStorageKeys.paymentMethodForProject
+    );
+    if (paymentMethodForProject && stripePaymentMethods?.length > 0) {
+      updatePaymentMethodsForProject({
+        projectId: paymentMethodForProject,
+        paymentMethodIds: [stripePaymentMethods[0]?.id],
+      });
+
+      localStorage.removeItem(localStorageKeys.paymentMethodForProject);
+    }
+  }, [stripePaymentMethods]);
 
   // Update loading states from API hooks
   useEffect(() => {
@@ -290,12 +312,6 @@ export const ProjectsComponent = () => {
     }, 100);
   }, []);
 
-  // Format currency for display
-  const formatCurrency = (amount: string | number) => {
-    if (!amount) return "$0.00";
-    return "$" + numeral(amount).format("0,0.00");
-  };
-
   // Handle create invoice
   const handleCreateInvoice = async () => {
     const {
@@ -449,6 +465,12 @@ export const ProjectsComponent = () => {
         onDeleteProject={handleDeleteProject}
         onOpenPaymentMethodsDialog={handleOpenPaymentMethodsDialog}
         onCreateInvoice={handleOpenCreateInvoiceDialog}
+        onAddPaymentMethod={(pId) => {
+          setOpenAddPaymentMethodModal({
+            open: true,
+            projectId: pId,
+          });
+        }}
         paymentMethods={stripePaymentMethods || []}
       />
 
@@ -494,6 +516,24 @@ export const ProjectsComponent = () => {
         state={createInvoiceState}
         onChange={handleCreateInvoiceChange}
         onCreateInvoice={handleCreateInvoice}
+      />
+
+      <AddPaymentMethodModal
+        open={openAddPaymentMethodModal.open}
+        onClose={() =>
+          setOpenAddPaymentMethodModal({
+            open: false,
+            projectId: null,
+          })
+        }
+        projectId={openAddPaymentMethodModal.projectId}
+        clientId={selectedClient?.id || null}
+        onSuccess={() => {
+          setOpenAddPaymentMethodModal({
+            open: false,
+            projectId: null,
+          });
+        }}
       />
     </Box>
   );

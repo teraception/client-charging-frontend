@@ -6,7 +6,7 @@ import { CreatePaymentMethodDto } from "JS/typingForNow/types";
 export const useCreatePaymentMethod = () => {
   const { paymentMethodService } = useAppServiceContext();
   const queryClient = useQueryClient();
-  const { paymentMethod } = useQueryKeys();
+  const { paymentMethod, project } = useQueryKeys();
   const { data, mutateAsync, isPending } = useMutation({
     mutationFn: async (data: CreatePaymentMethodDto) => {
       const response = await paymentMethodService.createPaymentMethod(data);
@@ -15,6 +15,9 @@ export const useCreatePaymentMethod = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: paymentMethod.list(),
+      });
+      queryClient.invalidateQueries({
+        queryKey: project.all,
       });
     },
   });

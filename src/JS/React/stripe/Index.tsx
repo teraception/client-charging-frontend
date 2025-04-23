@@ -2,6 +2,7 @@ import { Elements } from "@stripe/react-stripe-js";
 import { loadStripe, StripeElementsOptions } from "@stripe/stripe-js";
 import { PaymentSetupForm } from "./SetupForm";
 import { config } from "JS/Config";
+import { CreatePaymentMethodDto } from "JS/typingForNow/types";
 
 const stripePublishableKey = config.stripe.publishableKey;
 
@@ -9,7 +10,13 @@ const stripePublishableKey = config.stripe.publishableKey;
 // recreating the `Stripe` object on every render.
 const stripePromise = loadStripe(stripePublishableKey);
 
-export const StripeIndex = () => {
+interface Props {
+  forProject: boolean;
+  payload: CreatePaymentMethodDto | null;
+}
+
+export const StripeIndex = (props: Props) => {
+  const { forProject, payload } = props;
   const options = {
     mode: "setup",
     currency: "usd",
@@ -32,7 +39,7 @@ export const StripeIndex = () => {
   return (
     <div className="status-container">
       <Elements stripe={stripePromise} options={options}>
-        <PaymentSetupForm />
+        <PaymentSetupForm forProject={forProject} payload={payload} />
       </Elements>
     </div>
   );

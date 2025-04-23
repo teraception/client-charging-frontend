@@ -240,7 +240,7 @@ export interface PaymentMethod {
 }
 export interface CreatePaymentMethodDto {
   clientId: string;
-  projectId: string;
+  projectId?: string;
 }
 
 export interface StripePaymentMethod extends StripePaymentMethodType {

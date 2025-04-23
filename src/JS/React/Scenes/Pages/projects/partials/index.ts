@@ -4,3 +4,4 @@ export { DeleteProjectDialog } from "./DeleteProjectDialog";
 export { PaymentMethodsDialog } from "./PaymentMethodsDialog";
 export { CreateInvoiceDialog } from "./CreateInvoiceDialog";
 export { ProjectsTable } from "./ProjectsTable";
+export { AddPaymentMethodModal } from "./AddPaymentMethodModal";

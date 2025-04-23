@@ -172,7 +172,7 @@ export const Layout = (props: LayoutProps) => {
       <Route
         path="clients/:id/payment-methods/add"
         key={"paymentSetup"}
-        element={<StripeIndex />}
+        element={<StripeIndex forProject={false} payload={null} />}
       />
     </Routes>
   );
