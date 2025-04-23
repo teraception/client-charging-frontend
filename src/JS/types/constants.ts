@@ -34,17 +34,4 @@ export const appTimezones = [
   "Pacific/Auckland",
 ];
 
-export const currencies = [
-  "USD",
-  "EUR",
-  "GBP",
-  "CAD",
-  "AUD",
-  "JPY",
-  "CNY",
-  "INR",
-  "BRL",
-  "CHF",
-  "SGD",
-  "MXN",
-];
+export const currencies = ["USD"];
