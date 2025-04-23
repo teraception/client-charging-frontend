@@ -23,6 +23,7 @@ import {
   MaterialReactTable,
   useMaterialReactTable,
 } from "material-react-table";
+import dayjs from "dayjs";
 import AddIcon from "@mui/icons-material/Add";
 import { useNavigate } from "react-router";
 import { useRouting } from "JS/React/Hooks/Routes";
@@ -151,6 +152,27 @@ export const PaymentMethodComponent = (props: PaymentMethodComponentProps) => {
               }}
             />
           );
+        },
+      },
+      {
+        accessorKey: "created",
+        header: "Created At",
+        enableHiding: false,
+        accessorFn: (row: any) => {
+          return row.created
+            ? dayjs(row.created * 1000).format("DD/MM/YYYY")
+            : "";
+        },
+      },
+      {
+        accessorKey: "expireDate",
+        header: "Expiration Date",
+        enableHiding: false,
+        accessorFn: (row: any) => {
+          if (row.type === "card" && row.card) {
+            return `${row.card.exp_month}/${row.card.exp_year}`;
+          }
+          return "-";
         },
       },
     ],
