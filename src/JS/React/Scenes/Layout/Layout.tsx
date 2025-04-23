@@ -180,7 +180,9 @@ export const Layout = (props: LayoutProps) => {
   return (
     <Fragment>
       <Helmet>
-        <title>Dashboard</title>
+        <title>{`${
+          selectedClient?.name ?? "Dashboard"
+        } - Teraception CRM`}</title>
       </Helmet>
       <HeaderContainer>
         <Grid container justifyContent={"end"} alignItems={"center"}>
