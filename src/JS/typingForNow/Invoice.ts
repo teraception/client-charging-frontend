@@ -45,6 +45,14 @@ export interface CreateInvoiceDto
 export interface InvoiceDto extends Invoice {
   project?: Project | null;
   client?: Client | null;
+  previewInvoiceMeta?: PreviewInvoiceMeta;
+}
+
+export interface PreviewInvoiceMeta {
+  attachmentLinks?: string[];
+  contactEmail?: string;
+  contactPhone?: string;
+  companyTitle?: string;
 }
 
 export interface CustomInvoiceSendDto {

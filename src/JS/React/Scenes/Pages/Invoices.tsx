@@ -27,6 +27,7 @@ import {
 import DeleteIcon from "@mui/icons-material/Delete";
 import PaymentIcon from "@mui/icons-material/Payment";
 import BugReportIcon from "@mui/icons-material/BugReport";
+import VisibilityIcon from "@mui/icons-material/Visibility";
 import dayjs from "dayjs";
 import numeral from "numeral";
 import {
@@ -35,6 +36,7 @@ import {
   MRT_ColumnDef,
 } from "material-react-table";
 import { InvoiceDto, InvoiceStatus } from "JS/typingForNow/Invoice";
+import InvoicePreviewDialog from "JS/React/Scenes/Partials/Invoices/InvoicePreviewDialog";
 
 const Invoices = () => {
   const { selectedClient } = useSelectedClient();
@@ -63,6 +65,10 @@ const Invoices = () => {
     message: string;
     severity: "success" | "error";
   }>({ open: false, message: "", severity: "success" });
+  const [selectedInvoice, setSelectedInvoice] = useState<InvoiceDto | null>(
+    null
+  );
+  const [openPreviewDialog, setOpenPreviewDialog] = useState(false);
 
   // Get invoices for the selected client
   const { invoicesData, invoicesIsLoading, refetchInvoices } =
@@ -236,6 +242,12 @@ const Invoices = () => {
     handleSendEmailClick(invoiceData, isTesting);
   };
 
+  // Handle preview invoice
+  const handlePreviewInvoice = (invoice: InvoiceDto) => {
+    setSelectedInvoice(invoice);
+    setOpenPreviewDialog(true);
+  };
+
   // Define table columns
   const columns = useMemo<MRT_ColumnDef<InvoiceDto>[]>(
     () => [
@@ -296,6 +308,16 @@ const Invoices = () => {
         header: "Actions",
         Cell: ({ row }) => (
           <Box sx={{ display: "flex", gap: 1 }}>
+            <Tooltip title="View Invoice">
+              <IconButton
+                onClick={() => handlePreviewInvoice(row.original)}
+                size="small"
+                color="primary"
+              >
+                <VisibilityIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+
             {isSuperAdmin && (
               <>
                 <Tooltip title="Delete invoice">
@@ -544,6 +566,13 @@ const Invoices = () => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Invoice Preview Dialog */}
+      <InvoicePreviewDialog
+        open={openPreviewDialog}
+        onClose={() => setOpenPreviewDialog(false)}
+        invoice={selectedInvoice}
+      />
 
       {/* Snackbar for notifications */}
       <Snackbar
