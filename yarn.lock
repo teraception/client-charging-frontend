@@ -3288,6 +3288,11 @@
     "@types/prop-types" "*"
     csstype "^3.0.2"
 
+"@types/shortid@^2.2.0":
+  version "2.2.0"
+  resolved "https://registry.yarnpkg.com/@types/shortid/-/shortid-2.2.0.tgz#905990fc4275f77e60ab0cd9f791b91a3d4bff04"
+  integrity sha512-jBG2FgBxcaSf0h662YloTGA32M8UtNbnTPekUr/eCmWXq0JWQXgNEQ/P5Gf05Cv66QZtE1Ttr83I1AJBPdzCBg==
+
 "@types/stack-utils@^2.0.0":
   version "2.0.3"
   resolved "https://registry.yarnpkg.com/@types/stack-utils/-/stack-utils-2.0.3.tgz#6209321eb2c1712a7e7466422b8cb1fc0d9dd5d8"
@@ -6017,6 +6022,13 @@ shebang-regex@^3.0.0:
   version "3.0.0"
   resolved "https://registry.yarnpkg.com/shebang-regex/-/shebang-regex-3.0.0.tgz#ae16f1644d873ecad843b0307b143362d4c42172"
   integrity sha512-7++dFhtcx3353uBaq8DDR4NuxBetBzC7ZQOhmTQInHEd6bSrXdiEyzCvG07Z44UYdLShWUyXt5M/yhz8ekcb1A==
+
+shortid@^2.2.17:
+  version "2.2.17"
+  resolved "https://registry.yarnpkg.com/shortid/-/shortid-2.2.17.tgz#ea87297a36b7edd10a57818fbac5be798e0994bb"
+  integrity sha512-GpbM3gLF1UUXZvQw6MCyulHkWbRseNO4cyBEZresZRorwl1+SLu1ZdqgVtuwqz8mB6RpwPkm541mYSqrKyJSaA==
+  dependencies:
+    nanoid "^3.3.8"
 
 side-channel-list@^1.0.0:
   version "1.0.0"

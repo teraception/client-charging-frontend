@@ -32,8 +32,9 @@ import {
   AddPaymentMethodModal,
 } from "./partials";
 import { InvoiceStatus } from "JS/typingForNow/Invoice";
-import { v4 as uuidv4 } from "uuid";
+import shortid from "shortid";
 import { localStorageKeys } from "JS/types/constants";
+import { enqueueSnackbar } from "notistack";
 
 // Initialize dayjs plugins
 dayjs.extend(utc);
@@ -99,7 +100,7 @@ export const ProjectsComponent = () => {
     invoiceCurrency: "USD", // Default currency
     chargeDays: "1", // Default to 1 day
     chargeTime: new Date(), // Default to current time
-    shortId: uuidv4(), // Add shortId field
+    shortId: shortid.generate(), // Add shortId field
     amountError: "",
     isLoading: false,
   });
@@ -295,7 +296,7 @@ export const ProjectsComponent = () => {
       invoiceCurrency: "USD", // Default currency
       chargeDays: "1", // Default to 1 day
       chargeTime: new Date(), // Default to current time
-      shortId: uuidv4(), // Initialize shortId as empty
+      shortId: shortid.generate(), // Initialize shortId as empty
       amountError: "",
       isLoading: false,
     });
@@ -387,7 +388,10 @@ export const ProjectsComponent = () => {
         },
         files: files,
       });
-
+      enqueueSnackbar("Invoice created successfully", {
+        variant: "success",
+        autoHideDuration: 3000,
+      });
       setOpenCreateInvoiceDialog(false);
     } catch (error) {
       console.error("Error creating invoice:", error);

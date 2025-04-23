@@ -139,8 +139,16 @@ export const PaymentMethodComponent = (props: PaymentMethodComponentProps) => {
               icon={icon}
               label={label}
               color={color}
-              variant="outlined"
-              sx={{ fontWeight: 500 }}
+              variant="filled"
+              size="small"
+              sx={{
+                fontWeight: 500,
+                pl: 0.5,
+                borderRadius: "16px",
+                "& .MuiChip-label": {
+                  padding: "0 8px 0 4px",
+                },
+              }}
             />
           );
         },
