@@ -2,7 +2,7 @@ import React, { useState, useCallback, useEffect } from "react";
 import { Typography, Button, Box, Divider } from "@mui/material";
 import { useSelectedClient } from "JS/React/Context/SelectedClientContext";
 import AddIcon from "@mui/icons-material/Add";
-import { Project } from "JS/typingForNow/types";
+import { Project, StatusCode } from "JS/typingForNow/types";
 import { useNavigate } from "react-router";
 import { useRouting } from "JS/React/Hooks/Routes";
 import { useAccessHandler } from "JS/React/Hooks/AccessHandler";
@@ -373,7 +373,7 @@ export const ProjectsComponent = () => {
       ) as HTMLInputElement;
       const files = fileInput?.files || undefined;
 
-      await createInvoice({
+      const response = await createInvoice({
         data: {
           clientId: selectedClient.id,
           projectId: invoiceProjectId,
@@ -388,10 +388,13 @@ export const ProjectsComponent = () => {
         },
         files: files,
       });
-      enqueueSnackbar("Invoice created successfully", {
-        variant: "success",
-        autoHideDuration: 3000,
-      });
+
+      if (response.statusCode === StatusCode.SUCCESS) {
+        enqueueSnackbar("Invoice created successfully", {
+          variant: "success",
+          autoHideDuration: 3000,
+        });
+      }
       setOpenCreateInvoiceDialog(false);
     } catch (error) {
       console.error("Error creating invoice:", error);

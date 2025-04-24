@@ -20,8 +20,22 @@ const HTTP_ERROR_MESSAGES = {
   401: "Unauthorized: Authentication is required",
   403: "Forbidden: You do not have permission to access this resource",
   404: "Not Found: The requested resource was not found",
+  429: "Rate Limit: Too many requests, please try again later",
   500: "Server Error: Something went wrong on our end",
   503: "Service Unavailable: The server is temporarily unavailable",
+};
+
+// Status code mapping to human-readable messages
+const STATUS_CODE_MESSAGES = {
+  BAD_REQUEST: "The request could not be processed due to invalid data",
+  UNAUTHENTICATED: "Please login to continue",
+  MISSING_RESOURCE: "The requested resource was not found",
+  RATE_LIMIT: "Too many requests, please try again later",
+  INTERNAL_SERVER_ERROR: "Something went wrong on our end",
+  AUTHENTICATION_ERROR: "Authentication failed",
+  FREELANCER_ERROR: "There was an issue with freelancer processing",
+  PROVISIONING_ERROR: "Service provisioning failed",
+  INTEGRATION_ERROR: "There was an issue with an external service",
 };
 
 export class BaseService {
@@ -103,24 +117,8 @@ export class BaseService {
         if (error.response) {
           console.log("error.response", error.response);
           const response = error.response;
-
-          // Display appropriate error message using notistack
           const statusCode = response.status;
-
-          let errorMessage = "";
-
-          if (response?.data?.data?.code === 11000) {
-            errorMessage = `${
-              Object.values(response.data?.data?.keyValue)[0]
-            } already exists`;
-          } else {
-            errorMessage =
-              response.data?.message ||
-              response.data?.data?.message ||
-              response.data?.data?.raw?.message ||
-              HTTP_ERROR_MESSAGES[statusCode] ||
-              "An unexpected error occurred";
-          }
+          const responseData = response.data;
 
           // Capture in Sentry for monitoring
           Sentry.captureException(error, {
@@ -128,10 +126,65 @@ export class BaseService {
             contexts: {
               response: {
                 status: statusCode,
-                data: response.data,
+                data: responseData,
               },
             },
           });
+
+          let errorMessage = "";
+
+          // Handle custom error responses from our interceptor
+          if (responseData?.errors && responseData.errors.length > 0) {
+            // First check if there are field-specific errors
+            const generalErrors = responseData.errors.find(
+              (err) => err.identifier === "general"
+            );
+
+            // Get field errors excluding general ones
+            const fieldErrors = responseData.errors.filter(
+              (err) => err.identifier !== "general"
+            );
+
+            if (generalErrors && generalErrors.errors.length > 0) {
+              // Use the first general error message
+              errorMessage = generalErrors.errors[0].message;
+            } else if (fieldErrors.length > 0) {
+              // If no general error but field errors exist, show the first field error
+              const firstFieldError = fieldErrors[0];
+              if (firstFieldError.errors.length > 0) {
+                errorMessage = `${firstFieldError.identifier}: ${firstFieldError.errors[0].message}`;
+              }
+            }
+
+            // If we have multiple field errors, indicate there are more
+            if (fieldErrors.length > 1) {
+              const additionalErrorCount = fieldErrors.length - 1;
+              errorMessage += ` (and ${additionalErrorCount} more ${
+                additionalErrorCount === 1 ? "error" : "errors"
+              })`;
+            }
+          }
+          // Handle mongo-specific error
+          else if (response?.data?.data?.code === 11000) {
+            errorMessage = `${
+              Object.values(response.data?.data?.keyValue)[0]
+            } already exists`;
+          }
+          // Handle status code based errors
+          else if (responseData?.statusCode) {
+            errorMessage =
+              STATUS_CODE_MESSAGES[responseData.statusCode] ||
+              "An unexpected error occurred";
+          }
+          // Fallback to default error handling
+          else {
+            errorMessage =
+              responseData?.message ||
+              responseData?.data?.message ||
+              responseData?.data?.raw?.message ||
+              HTTP_ERROR_MESSAGES[statusCode] ||
+              "An unexpected error occurred";
+          }
 
           // Show error notification
           enqueueSnackbar(errorMessage, {
