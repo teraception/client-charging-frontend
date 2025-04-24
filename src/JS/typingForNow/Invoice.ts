@@ -20,10 +20,9 @@ export interface Invoice {
   currency: string;
   amount: number;
   description?: string;
-  // attach files with the secure link pattern to safely store and navigate
   attachments?: Content[];
   platformInvoiceData?: platformInvoiceData;
-
+  amountPaid: number;
   // short ID for invoice to send in email to client
   shortId: string;
   status: InvoiceStatus;

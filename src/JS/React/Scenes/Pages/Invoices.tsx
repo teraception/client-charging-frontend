@@ -155,7 +155,7 @@ const Invoices = () => {
 
   // Format date from timestamp
   const formatTimestampsDate = (timestamp: number) => {
-    return dayjs(timestamp * 1000).format("DD/MM/YYYY");
+    return dayjs(timestamp * 1000).format("DD/MM/YYYY - h:mm A");
   };
 
   // Format amount to display with currency and commas using numeral
@@ -265,15 +265,6 @@ const Invoices = () => {
         size: 150,
       },
       {
-        accessorKey: "chargeDayTime",
-        header: "Due Date",
-        Cell: ({ row }) =>
-          row.original.chargeDayTime
-            ? formatTimestampsDate(row.original.chargeDayTime)
-            : "-",
-        size: 150,
-      },
-      {
         accessorKey: "scheduleDate",
         header: "Schedule Date",
         Cell: ({ row }) =>
@@ -282,6 +273,16 @@ const Invoices = () => {
             : "-",
         size: 150,
       },
+      {
+        accessorKey: "chargeDayTime",
+        header: "Due Date",
+        Cell: ({ row }) =>
+          row.original.chargeDayTime
+            ? formatTimestampsDate(row.original.chargeDayTime)
+            : "-",
+        size: 150,
+      },
+
       {
         accessorKey: "status",
         header: "Status",

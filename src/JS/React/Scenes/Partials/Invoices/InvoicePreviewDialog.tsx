@@ -48,6 +48,7 @@ const InvoicePreviewDialog: React.FC<InvoicePreviewDialogProps> = ({
   const contactPhone = invoice.previewInvoiceMeta?.contactPhone || "-";
   const attachmentLinks = invoice.previewInvoiceMeta?.attachmentLinks || [];
   const formattedAmount = formatAmount(invoice.amount);
+  const formattedAmountPaid = formatAmount(invoice.amountPaid);
 
   return (
     <Dialog
@@ -174,7 +175,7 @@ const InvoicePreviewDialog: React.FC<InvoicePreviewDialogProps> = ({
                   }}
                 >
                   <Typography variant="body2">Amount paid</Typography>
-                  <Typography variant="body2">$0.00</Typography>
+                  <Typography variant="body2">{formattedAmountPaid}</Typography>
                 </Box>
 
                 <Box
