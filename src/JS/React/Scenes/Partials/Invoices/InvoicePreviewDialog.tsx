@@ -14,8 +14,13 @@ import {
 } from "@mui/material";
 import { InvoiceDto } from "JS/typingForNow/Invoice";
 import dayjs from "dayjs";
+import timezone from "dayjs/plugin/timezone";
+import utc from "dayjs/plugin/utc";
 import numeral from "numeral";
 import AttachFileIcon from "@mui/icons-material/AttachFile";
+
+dayjs.extend(utc);
+dayjs.extend(timezone);
 
 interface InvoicePreviewDialogProps {
   open: boolean;
@@ -37,16 +42,25 @@ const InvoicePreviewDialog: React.FC<InvoicePreviewDialogProps> = ({
     return numeral(amount / 100).format("$0,0.00");
   };
 
+  // Get user's timezone
+  const userTimezone = invoice.timezone || dayjs.tz.guess();
+
   const issueDate = invoice.sendDateTime
-    ? dayjs(invoice.sendDateTime * 1000).format("D MMMM YYYY - h:mm A")
+    ? dayjs(invoice.sendDateTime * 1000)
+        .tz(userTimezone)
+        .format("D MMMM YYYY - h:mm A")
     : "-";
 
   const chargeDate = invoice.chargeDayTime
-    ? dayjs(invoice.chargeDayTime * 1000).format("D MMMM YYYY - h:mm A")
+    ? dayjs(invoice.chargeDayTime * 1000)
+        .tz(userTimezone)
+        .format("D MMMM YYYY - h:mm A")
     : "-";
 
   const paidAt = invoice.paidAt
-    ? dayjs(invoice.paidAt * 1000).format("D MMMM YYYY - h:mm A")
+    ? dayjs(invoice.paidAt * 1000)
+        .tz(userTimezone)
+        .format("D MMMM YYYY - h:mm A")
     : "-";
 
   const companyTitle = invoice.previewInvoiceMeta?.companyTitle || "Company";

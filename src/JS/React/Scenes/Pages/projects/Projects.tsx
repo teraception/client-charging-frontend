@@ -381,6 +381,7 @@ export const ProjectsComponent = () => {
           currency: invoiceCurrency,
           sendDateTime: sendDateTime,
           chargeDayTime: chargeDayTime,
+          timezone: invoiceTimezone,
           description: invoiceDescription.trim() || undefined,
           status: InvoiceStatus.DRAFT,
           shortId: shortId, // Use shortId from state

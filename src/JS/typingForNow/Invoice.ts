@@ -31,6 +31,7 @@ export interface Invoice {
   description?: string;
   attachments?: Content[];
   platformInvoiceData?: platformInvoiceData;
+  timezone: string;
   // short ID for invoice to send in email to client
   shortId: string;
   status: InvoiceStatus;
