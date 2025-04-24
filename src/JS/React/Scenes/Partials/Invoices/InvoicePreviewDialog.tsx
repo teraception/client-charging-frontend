@@ -38,11 +38,15 @@ const InvoicePreviewDialog: React.FC<InvoicePreviewDialogProps> = ({
   };
 
   const issueDate = invoice.sendDateTime
-    ? dayjs(invoice.sendDateTime * 1000).format("DD/MM/YYYY")
+    ? dayjs(invoice.sendDateTime * 1000).format("D MMMM YYYY - h:mm A")
     : "-";
 
   const chargeDate = invoice.chargeDayTime
-    ? dayjs(invoice.chargeDayTime * 1000).format("DD/MM/YYYY")
+    ? dayjs(invoice.chargeDayTime * 1000).format("D MMMM YYYY - h:mm A")
+    : "-";
+
+  const paidAt = invoice.paidAt
+    ? dayjs(invoice.paidAt * 1000).format("D MMMM YYYY - h:mm A")
     : "-";
 
   const companyTitle = invoice.previewInvoiceMeta?.companyTitle || "Company";
@@ -90,6 +94,10 @@ const InvoicePreviewDialog: React.FC<InvoicePreviewDialogProps> = ({
               Charge date: {chargeDate}
             </Typography>
 
+            <Typography variant="body2" color="text.secondary">
+              Paid At: {paidAt}
+            </Typography>
+
             {attachmentLinks.length > 0 && (
               <Box sx={{ mt: 2 }}>
                 <Typography variant="body2" color="text.secondary">
@@ -126,12 +134,13 @@ const InvoicePreviewDialog: React.FC<InvoicePreviewDialogProps> = ({
             <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
               <strong>From:</strong> {companyTitle}
             </Typography>
+            <Typography variant="body2" color="text.secondary">
+              <strong>Invoice #{invoice.shortId || invoice.id}</strong>
+            </Typography>
 
             {/* Invoice Details */}
             <Box sx={{ mt: 3 }}>
-              <Typography variant="body2" color="text.secondary">
-                <strong>Invoice #{invoice.shortId || invoice.id}</strong>
-              </Typography>
+              <Divider sx={{ my: 2 }} />
 
               <Box
                 sx={{

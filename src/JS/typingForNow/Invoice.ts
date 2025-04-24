@@ -11,6 +11,13 @@ export enum InvoiceStatus {
   OVERDUE = "OVERDUE",
   DRAFT = "DRAFT",
   SCHEDULED = "SCHEDULED",
+  DELETED = "DELETED",
+  PAYMENT_FAILED = "PAYMENT_FAILED",
+  FINALIZED = "FINALIZED",
+  FINALIZATION_FAILED = "FINALIZATION_FAILED",
+  UNCOLLECTIBLE = "UNCOLLECTIBLE",
+  ACTION_REQUIRED = "ACTION_REQUIRED",
+  PROCESSING = "PROCESSING",
 }
 
 export interface Invoice {
@@ -19,10 +26,11 @@ export interface Invoice {
   projectId: string;
   currency: string;
   amount: number;
+  amountPaid: number;
+  paidAt: number | null;
   description?: string;
   attachments?: Content[];
   platformInvoiceData?: platformInvoiceData;
-  amountPaid: number;
   // short ID for invoice to send in email to client
   shortId: string;
   status: InvoiceStatus;
@@ -38,9 +46,13 @@ export interface Invoice {
 export interface CreateInvoiceDto
   extends Omit<
     Invoice,
-    "id" | "createdAt" | "updatedAt" | "platformInvoiceData" | "amountPaid"
+    | "id"
+    | "createdAt"
+    | "updatedAt"
+    | "platformInvoiceData"
+    | "amountPaid"
+    | "paidAt"
   > {}
-
 export interface InvoiceDto extends Invoice {
   project?: Project | null;
   client?: Client | null;

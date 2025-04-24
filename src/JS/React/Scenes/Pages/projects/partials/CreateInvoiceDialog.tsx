@@ -407,7 +407,7 @@ export const CreateInvoiceDialog: React.FC<CreateInvoiceDialogProps> = ({
             </Grid>
             <Grid item xs={12} md={6}>
               <TextField
-                label="Short ID"
+                label="Invoice Number"
                 type="text"
                 fullWidth
                 variant="outlined"

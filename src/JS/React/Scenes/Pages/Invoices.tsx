@@ -252,6 +252,12 @@ const Invoices = () => {
   const columns = useMemo<MRT_ColumnDef<InvoiceDto>[]>(
     () => [
       {
+        accessorKey: "invoiceNumber",
+        header: "Invoice Number",
+        Cell: ({ row }) => row.original.shortId || "-",
+        size: 180,
+      },
+      {
         accessorKey: "project.name",
         header: "Project",
         Cell: ({ row }) => row.original.project?.name || "-",
@@ -280,6 +286,14 @@ const Invoices = () => {
           row.original.chargeDayTime
             ? formatTimestampsDate(row.original.chargeDayTime)
             : "-",
+        size: 150,
+      },
+
+      {
+        accessorKey: "paidAt",
+        header: "Paid At",
+        Cell: ({ row }) =>
+          row.original.paidAt ? formatTimestampsDate(row.original.paidAt) : "-",
         size: 150,
       },
 
@@ -331,7 +345,11 @@ const Invoices = () => {
                     }
                     size="small"
                     color="error"
-                    disabled={!row.original.id}
+                    disabled={
+                      !row.original.id ||
+                      (row.original.status !== InvoiceStatus.DRAFT &&
+                        row.original.status !== InvoiceStatus.SCHEDULED)
+                    }
                   >
                     <DeleteIcon fontSize="small" />
                   </IconButton>
