@@ -38,7 +38,7 @@ export interface Invoice {
 export interface CreateInvoiceDto
   extends Omit<
     Invoice,
-    "id" | "createdAt" | "updatedAt" | "platformInvoiceData"
+    "id" | "createdAt" | "updatedAt" | "platformInvoiceData" | "amountPaid"
   > {}
 
 export interface InvoiceDto extends Invoice {
