@@ -35,8 +35,12 @@ import {
   useMaterialReactTable,
   MRT_ColumnDef,
 } from "material-react-table";
+import timezone from "dayjs/plugin/timezone";
+import utc from "dayjs/plugin/utc";
 import { InvoiceDto, InvoiceStatus } from "JS/typingForNow/Invoice";
 import InvoicePreviewDialog from "JS/React/Scenes/Partials/Invoices/InvoicePreviewDialog";
+dayjs.extend(utc);
+dayjs.extend(timezone);
 
 const Invoices = () => {
   const { selectedClient } = useSelectedClient();
@@ -154,8 +158,14 @@ const Invoices = () => {
   };
 
   // Format date from timestamp
-  const formatTimestampsDate = (timestamp: number) => {
-    return dayjs(timestamp * 1000).format("DD/MM/YYYY - h:mm A");
+  const formatTimestampsDate = (timestamp: number, timezone: string) => {
+    // Get user's timezone
+    const userTimezone = timezone || dayjs.tz.guess();
+
+    return dayjs(timestamp * 1000)
+      .utc()
+      .tz(userTimezone)
+      .format("D MMMM YYYY - h:mm A Z");
   };
 
   // Format amount to display with currency and commas using numeral
@@ -275,7 +285,10 @@ const Invoices = () => {
         header: "Schedule Date",
         Cell: ({ row }) =>
           row.original.sendDateTime
-            ? formatTimestampsDate(row.original.sendDateTime)
+            ? formatTimestampsDate(
+                row.original.sendDateTime,
+                row.original.timezone
+              )
             : "-",
         size: 150,
       },
@@ -284,7 +297,10 @@ const Invoices = () => {
         header: "Due Date",
         Cell: ({ row }) =>
           row.original.chargeDayTime
-            ? formatTimestampsDate(row.original.chargeDayTime)
+            ? formatTimestampsDate(
+                row.original.chargeDayTime,
+                row.original.timezone
+              )
             : "-",
         size: 150,
       },
@@ -293,7 +309,9 @@ const Invoices = () => {
         accessorKey: "paidAt",
         header: "Paid At",
         Cell: ({ row }) =>
-          row.original.paidAt ? formatTimestampsDate(row.original.paidAt) : "-",
+          row.original.paidAt
+            ? formatTimestampsDate(row.original.paidAt, row.original.timezone)
+            : "-",
         size: 150,
       },
 
