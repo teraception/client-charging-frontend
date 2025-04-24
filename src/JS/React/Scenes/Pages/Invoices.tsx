@@ -335,6 +335,20 @@ const Invoices = () => {
 
             {isSuperAdmin && (
               <>
+                <Tooltip title="Test Email Invoice">
+                  <IconButton
+                    onClick={() => handleSendInvoiceEmail(row.original, true)}
+                    size="small"
+                    color="info"
+                    disabled={
+                      sendInvoiceEmailToClientIsLoading ||
+                      !row.original.id ||
+                      row.original.status === InvoiceStatus.PAID
+                    }
+                  >
+                    <BugReportIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
                 <Tooltip title="Delete invoice">
                   <IconButton
                     onClick={() =>
@@ -354,23 +368,10 @@ const Invoices = () => {
                     <DeleteIcon fontSize="small" />
                   </IconButton>
                 </Tooltip>
-
-                <Tooltip title="Test Email Invoice">
-                  <IconButton
-                    onClick={() => handleSendInvoiceEmail(row.original, true)}
-                    size="small"
-                    color="info"
-                    disabled={
-                      sendInvoiceEmailToClientIsLoading || !row.original.id
-                    }
-                  >
-                    <BugReportIcon fontSize="small" />
-                  </IconButton>
-                </Tooltip>
               </>
             )}
 
-            {isClient && row.original.status !== InvoiceStatus.PAID ? (
+            {isClient ? (
               <Tooltip title="Pay now">
                 <IconButton
                   onClick={() =>
@@ -381,7 +382,8 @@ const Invoices = () => {
                   disabled={
                     processingPayment === row.original.id ||
                     payInvoiceNowIsLoading ||
-                    !row.original.id
+                    !row.original.id ||
+                    row.original.status === InvoiceStatus.PAID
                   }
                 >
                   {processingPayment === row.original.id ? (

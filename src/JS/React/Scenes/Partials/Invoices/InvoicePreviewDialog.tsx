@@ -91,11 +91,11 @@ const InvoicePreviewDialog: React.FC<InvoicePreviewDialogProps> = ({
             </Typography>
 
             <Typography variant="body2" color="text.secondary">
-              Charge date: {chargeDate}
+              Due date: {chargeDate}
             </Typography>
 
             <Typography variant="body2" color="text.secondary">
-              Paid At: {paidAt}
+              Paid date: {paidAt}
             </Typography>
 
             {attachmentLinks.length > 0 && (
