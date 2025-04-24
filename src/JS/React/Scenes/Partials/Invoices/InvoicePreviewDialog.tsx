@@ -47,20 +47,23 @@ const InvoicePreviewDialog: React.FC<InvoicePreviewDialogProps> = ({
 
   const issueDate = invoice.sendDateTime
     ? dayjs(invoice.sendDateTime * 1000)
+        .utc()
         .tz(userTimezone)
-        .format("D MMMM YYYY - h:mm A")
+        .format("D MMMM YYYY - h:mm A Z")
     : "-";
 
   const chargeDate = invoice.chargeDayTime
     ? dayjs(invoice.chargeDayTime * 1000)
+        .utc()
         .tz(userTimezone)
-        .format("D MMMM YYYY - h:mm A")
+        .format("D MMMM YYYY - h:mm A Z")
     : "-";
 
   const paidAt = invoice.paidAt
     ? dayjs(invoice.paidAt * 1000)
+        .utc()
         .tz(userTimezone)
-        .format("D MMMM YYYY - h:mm A")
+        .format("D MMMM YYYY - h:mm A Z")
     : "-";
 
   const companyTitle = invoice.previewInvoiceMeta?.companyTitle || "Company";
