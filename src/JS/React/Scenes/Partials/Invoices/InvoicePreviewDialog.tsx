@@ -30,6 +30,8 @@ const InvoicePreviewDialog: React.FC<InvoicePreviewDialogProps> = ({
 }) => {
   if (!invoice) return null;
 
+  console.log("invoice4234", invoice);
+
   // Format amount to display with currency and commas
   const formatAmount = (amount: number) => {
     return numeral(amount / 100).format("$0,0.00");
